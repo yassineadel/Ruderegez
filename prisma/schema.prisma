@@ -179,8 +179,14 @@ model VerificationToken {
   token      String   @unique
   expires    DateTime
   payload Json?
+   type       TokenType @default(SIGNUP)
 
   @@unique([identifier, token])
+}
+
+enum TokenType {
+  SIGNUP
+  PASSWORD_RESET
 }
 
 // =============================================================================
