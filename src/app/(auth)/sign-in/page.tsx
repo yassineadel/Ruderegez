@@ -1,17 +1,26 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signupAction } from "@/modules/auth/actions";
-import { Eye, EyeOff } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { Eye, EyeOff } from "lucide-react";
 
-export default function SignUpPage() {
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const justVerified = searchParams.get("verified") === "1";
+
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,9 +28,21 @@ export default function SignUpPage() {
   function handleSubmit() {
     setError(null);
     startTransition(async () => {
-      const result = await signupAction({ name, email, password });
-      if (!result.ok) return setError(result.error);
-      router.push(`/verify?email=${encodeURIComponent(email)}`);
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      // ONE message for every failure: no such user, wrong password,
+      // unverified, blocked. Same principle as signup — nothing leaks.
+      if (!result || result.error) {
+        setError("Incorrect email or password.");
+        return;
+      }
+
+      router.push("/");
+      router.refresh();
     });
   }
 
@@ -31,12 +52,19 @@ export default function SignUpPage() {
 
   return (
     <>
-      <h1 className="font-display text-5xl font-light mb-2">Create account</h1>
-      <p className="text-sm text-ink-soft mb-9">
-        Join us to design your own piece
-      </p>
+      <h1 className="font-display text-5xl font-light mb-2">Welcome back</h1>
+      <p className="text-sm text-ink-soft mb-9">Sign in or create an account</p>
 
-      <button  onClick={() => signIn("google", { callbackUrl: "/" })} className="w-full border border-ink py-3.5 text-xs tracking-[0.2em] hover:bg-ink hover:text-bone transition-colors mb-7">
+      {justVerified && (
+        <p className="mb-7 border border-line px-4 py-3 text-sm text-ink-soft">
+          Your email is verified. Sign in to continue.
+        </p>
+      )}
+
+      <button
+        onClick={() => signIn("google", { callbackUrl: "/" })}
+        className="w-full border border-ink py-3.5 text-xs tracking-[0.2em] hover:bg-ink hover:text-bone transition-colors mb-7"
+      >
         CONTINUE WITH GOOGLE
       </button>
 
@@ -46,13 +74,7 @@ export default function SignUpPage() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <div className="space-y-3 mb-7">
-        <input
-          className={field}
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+      <div className="space-y-3 mb-5">
         <input
           className={field}
           type="email"
@@ -60,6 +82,7 @@ export default function SignUpPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+
         <div className="relative">
           <input
             className={field + " pr-12"}
@@ -79,20 +102,29 @@ export default function SignUpPage() {
         </div>
       </div>
 
+      <div className="flex justify-end mb-7">
+        <Link
+          href="/forgot-password"
+          className="text-sm text-ink-soft hover:text-ink underline underline-offset-4"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
       <button
         onClick={handleSubmit}
         disabled={pending}
         className="w-full bg-ink text-bone py-4 text-xs tracking-[0.2em] disabled:opacity-40 hover:opacity-90 transition-opacity"
       >
-        {pending ? "CREATING…" : "CREATE ACCOUNT →"}
+        {pending ? "SIGNING IN…" : "SIGN IN →"}
       </button>
 
       {error && <p className="mt-4 text-sm text-red-800">{error}</p>}
 
       <p className="mt-7 text-center text-sm text-ink-soft">
-        Already have an account?{" "}
-        <Link href="/sign-in" className="text-ink underline underline-offset-4">
-          Sign in
+        Don&apos;t have an account?{" "}
+        <Link href="/sign-up" className="text-ink underline underline-offset-4">
+          Create one
         </Link>
       </p>
     </>
