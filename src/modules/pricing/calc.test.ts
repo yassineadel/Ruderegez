@@ -6,7 +6,7 @@ import { calculateitemprice } from "./calc";
 
 
 describe("sumMinor", () => {
- /*
+ 
     it("returns 0 for an empty list", () => {
     expect(sumMinor([])).toBe(0);
   });
@@ -14,9 +14,9 @@ describe("sumMinor", () => {
   it("adds three amounts", () => {
     expect(sumMinor([100, 250, 50] as Minor[])).toBe(400);
   });
-*/
+
 
   it("calculate the price",()=>{
-     expect(calculateitemprice(20000,25000,11368,20)).toBe(682080);
+     expect(calculateitemprice(20000,25000,11368 as Minor,20)).toBe(682080);
   })
 });

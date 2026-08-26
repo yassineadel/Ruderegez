@@ -5,12 +5,17 @@
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --color-bone: #ece7de;
+  --color-bone-deep: #e3ddd2;
+  --color-ink: #141414;
+  --color-ink-soft: #4a4a4a;
+  --color-line: #c9c2b6;
+
+  --font-display: var(--font-display), serif;
+  --font-body: var(--font-body), sans-serif;
 }
+
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -20,7 +25,7 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bone);
+  color: var(--color-ink);
+  font-family: var(--font-body);
 }
