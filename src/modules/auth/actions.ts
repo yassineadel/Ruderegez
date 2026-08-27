@@ -1,51 +1,78 @@
 "use server";
-//import { fa } from "zod/locales";
-import { signupSchema ,verifyOtpSchema } from "./schema";
-import { startSignup , verifySignup} from "./service";
-//import { error } from "console";
 
-export async function signupAction(raw: unknown) {
-    try{
+import {
+  signupSchema,
+  verifyOtpSchema,
+  requestResetSchema,
+  resetPasswordSchema,
+} from "./schema";
+import {
+  startSignup,
+  verifySignup,
+  requestPasswordReset,
+  resetPassword,
+} from "./service";
+
+import { toUserMessage, type Result } from "./errors";
+
+export async function signupAction(raw: unknown): Promise<Result> {
+  try {
     const parsed = signupSchema.safeParse(raw);
-    if(!parsed.success){
-        return{ok :false as const,error: parsed.error.issues[0].message}
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0].message };
     }
     await startSignup(parsed.data);
-    return{ok:true as const};
-    }catch(err){
-     const code = err instanceof Error ? err.message : "UNKNOWN";
-    return { ok: false as const, error: toUserMessage(code) };
-    }
+    return { ok: true };
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "UNKNOWN";
+    return { ok: false, error: toUserMessage(code) };
+  }
 }
 
-
-export async function verifyAction(raw: unknown) {
-    try{
+export async function verifyAction(raw: unknown): Promise<Result> {
+  try {
     const parsed = verifyOtpSchema.safeParse(raw);
-    if(!parsed.success){
-        return{ok :false as const,error: parsed.error.issues[0].message}
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0].message };
     }
     await verifySignup(parsed.data);
-    return{ok:true as const}
-    }catch(err){
-     const code = err instanceof Error ? err.message : "UNKNOWN";
-    return { ok: false as const, error: toUserMessage(code) };
-    }
+    return { ok: true };
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "UNKNOWN";
+    return { ok: false, error: toUserMessage(code) };
+  }
 }
 
+/**
+ * Always returns ok:true when the email is well-formed, whether or not an
+ * account exists. The page shows one message either way.
+ */
+export async function requestResetAction(raw: unknown): Promise<Result> {
+  try {
+    const parsed = requestResetSchema.safeParse(raw);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0].message };
+    }
+    await requestPasswordReset(parsed.data);
+    return { ok: true };
+  } catch (err) {
+    console.error("[requestResetAction]", err);
+    // Even a genuine failure returns ok — an error here would reveal that
+    // something happened for this address and not for others.
+    return { ok: true };
+  }
+}
 
-
-
-
-
-
-
-
-
-
-function toUserMessage(code: string): string {
-  const messages: Record<string, string> = {
-    INVALID_CODE: "That code is invalid or has expired.",
-  };
-  return messages[code] ?? "Something went wrong. Please try again.";
+export async function resetPasswordAction(raw: unknown): Promise<Result> {
+  try {
+    const parsed = resetPasswordSchema.safeParse(raw);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0].message };
+    }
+    await resetPassword(parsed.data);
+    return { ok: true };
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "UNKNOWN";
+    return { ok: false, error: toUserMessage(code) };
+  }
 }

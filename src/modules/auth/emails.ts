@@ -50,3 +50,51 @@ export function duplicateSignupEmail(): { subject: string; html: string } {
     `),
   };
 }
+
+/**
+ * FR-05 — the reset link.
+ *
+ * The URL carries the RAW token. Only its hash is in the database, so this
+ * email is the one and only place the raw value ever exists.
+ */
+export function passwordResetEmail(url: string): { subject: string; html: string } {
+  return {
+    subject: "Reset your Ruderegez password",
+    html: wrap(`
+      <p>We received a request to reset the password on this account.</p>
+      <p style="margin: 24px 0;">
+        <a href="${url}"
+           style="display: inline-block; background: #1a1a1a; color: #faf8f4;
+                  padding: 14px 28px; text-decoration: none; font-size: 13px;
+                  letter-spacing: 2px;">
+          RESET PASSWORD
+        </a>
+      </p>
+      <p style="font-size: 12px; color: #888;">
+        Or paste this into your browser:<br />${url}
+      </p>
+      <p>The link expires in 30 minutes and can only be used once.</p>
+      <p>If you did not request this, you can safely ignore this email — your
+      password has not changed.</p>
+    `),
+  };
+}
+
+/**
+ * Sent AFTER a successful reset, to the address that was changed.
+ *
+ * If the reset was not the account owner, this is how they find out while the
+ * attacker is still only one step in. Costs nothing to send and is the single
+ * highest-value email in the whole auth flow.
+ */
+export function passwordChangedEmail(): { subject: string; html: string } {
+  return {
+    subject: "Your Ruderegez password was changed",
+    html: wrap(`
+      <p>The password on your Ruderegez account was just changed.</p>
+      <p>If this was you, nothing further is needed.</p>
+      <p>If this was <strong>not</strong> you, reset your password immediately
+      from the sign-in page and contact us.</p>
+    `),
+  };
+}
