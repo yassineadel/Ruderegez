@@ -39,7 +39,7 @@ export default async function ProductsPage({
 
   return (
     <div className="px-6 py-16 lg:px-12 lg:py-24">
-      <h1 className="font-display text-5xl font-light mb-2">Jewellery</h1>
+      <h1 className="font-display text-5xl font-light mb-2">All Products</h1>
       <p className="text-sm text-ink-soft mb-12">
         {total} {total === 1 ? "piece" : "pieces"}
       </p>
