@@ -6,15 +6,17 @@ import { Menu, X } from "lucide-react";
 
 /**
  * Client component only because of the mobile menu toggle. Whether the visitor
- * is signed in is decided on the SERVER and passed down as a prop — the header
- * never queries anything itself.
+ * is signed in, and how many items are in their bag, are decided on the SERVER
+ * and passed down as props — the header never queries anything itself.
  */
 export default function SiteHeader({
   isSignedIn,
   isAdmin,
+  cartCount,
 }: {
   isSignedIn: boolean;
   isAdmin: boolean;
+  cartCount: number;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -59,7 +61,10 @@ export default function SiteHeader({
         {/* Right — account and bag */}
         <div className="flex items-center gap-5 lg:gap-7 text-[11px] tracking-[0.2em] lg:flex-1 lg:justify-end">
           {isAdmin && (
-            <Link href="/admin" className="hidden lg:block text-ink-soft hover:text-ink transition-colors">
+            <Link
+              href="/admin"
+              className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
+            >
               ADMIN
             </Link>
           )}
@@ -69,10 +74,8 @@ export default function SiteHeader({
           >
             {isSignedIn ? "ACCOUNT" : "SIGN IN"}
           </Link>
-          {/* Placeholder until the cart exists. The item count goes in the
-              parentheses once there is a cart to count. */}
           <Link href="/cart" className="hover:text-ink transition-colors">
-            BAG (0)
+            BAG{cartCount > 0 && ` (${cartCount})`}
           </Link>
         </div>
       </div>
@@ -94,7 +97,13 @@ export default function SiteHeader({
               </Link>
             ))}
             <div className="border-t border-line pt-7 flex flex-col gap-7 text-ink-soft">
-              <Link href={isSignedIn ? "/account" : "/sign-in"} onClick={() => setOpen(false)}>
+              <Link href="/cart" onClick={() => setOpen(false)}>
+                BAG{cartCount > 0 && ` (${cartCount})`}
+              </Link>
+              <Link
+                href={isSignedIn ? "/account" : "/sign-in"}
+                onClick={() => setOpen(false)}
+              >
                 {isSignedIn ? "ACCOUNT" : "SIGN IN"}
               </Link>
               {isAdmin && (
