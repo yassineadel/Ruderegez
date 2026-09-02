@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { formatEGP } from "@/lib/money";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 import type { PricedProductCard } from "@/modules/catalog/service";
 
-export default function ProductCard({ product }: { product: PricedProductCard }) {
+export default function ProductCard({
+  product,
+}: {
+  product: PricedProductCard;
+}) {
+  // Ordered isPrimary first in the repository, so [0] is always the right one.
   const image = product.images[0];
 
   return (
@@ -10,8 +16,9 @@ export default function ProductCard({ product }: { product: PricedProductCard })
       <div className="aspect-[4/5] bg-bone-deep overflow-hidden mb-4">
         {image ? (
           <img
-            src={image.url}
+            src={cloudinaryUrl(image.url, { width: 600 })}
             alt={image.alt ?? product.name}
+            loading="lazy"
             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (

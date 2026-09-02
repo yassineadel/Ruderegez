@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 import type { ProductDetail } from "@/modules/catalog/repository";
 
 export default function ProductGallery({
@@ -24,7 +25,7 @@ export default function ProductGallery({
     <div>
       <div className="aspect-[4/5] bg-bone-deep overflow-hidden mb-3">
         <img
-          src={images[active].url}
+          src={cloudinaryUrl(images[active].url, { width: 1000 })}
           alt={images[active].alt ?? name}
           className="h-full w-full object-cover"
         />
@@ -40,10 +41,12 @@ export default function ProductGallery({
                 "w-20 aspect-[4/5] bg-bone-deep overflow-hidden border-2 transition-colors " +
                 (i === active ? "border-ink" : "border-transparent")
               }
+              aria-label={`View image ${i + 1}`}
             >
               <img
-                src={img.url}
+                src={cloudinaryUrl(img.url, { width: 160 })}
                 alt=""
+                loading="lazy"
                 className="h-full w-full object-cover"
               />
             </button>

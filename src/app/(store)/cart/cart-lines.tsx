@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Minus, Plus, X } from "lucide-react";
 import { formatEGP } from "@/lib/money";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 import { setQuantityAction, removeFromCartAction } from "@/modules/cart/actions";
 import type { CartLine } from "@/modules/cart/service";
 
@@ -43,8 +44,9 @@ export default function CartLines({ lines }: { lines: CartLine[] }) {
             >
               {line.imageUrl && (
                 <img
-                  src={line.imageUrl}
+                  src={cloudinaryUrl(line.imageUrl, { width: 300 })}
                   alt={line.name}
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
               )}
@@ -60,7 +62,9 @@ export default function CartLines({ lines }: { lines: CartLine[] }) {
                     {line.name}
                   </Link>
                   {line.size && (
-                    <p className="text-xs text-ink-soft mt-1">Size {line.size}</p>
+                    <p className="text-xs text-ink-soft mt-1">
+                      Size {line.size}
+                    </p>
                   )}
                 </div>
 
@@ -84,7 +88,9 @@ export default function CartLines({ lines }: { lines: CartLine[] }) {
                   >
                     <Minus size={14} />
                   </button>
-                  <span className="px-4 text-sm tabular-nums">{line.quantity}</span>
+                  <span className="px-4 text-sm tabular-nums">
+                    {line.quantity}
+                  </span>
                   <button
                     onClick={() => change(line.id, line.quantity + 1)}
                     disabled={pending || line.quantity >= 20}
