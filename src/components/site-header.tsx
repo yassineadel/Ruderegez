@@ -13,11 +13,13 @@ export default function SiteHeader({
   isSignedIn,
   isAdmin,
   cartCount,
+  onSignOut,
 }: {
   isSignedIn: boolean;
   isAdmin: boolean;
   cartCount: number;
-}) {
+onSignOut: () => Promise<void>;
+}) {        
   const [open, setOpen] = useState(false);
 
   const links = [
@@ -68,12 +70,31 @@ export default function SiteHeader({
               ADMIN
             </Link>
           )}
-          <Link
-            href={isSignedIn ? "/account" : "/sign-in"}
-            className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
-          >
-            {isSignedIn ? "ACCOUNT" : "SIGN IN"}
-          </Link>
+                    {isSignedIn ? (
+            <>
+              <Link
+                href="/account"
+                className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
+              >
+                ACCOUNT
+              </Link>
+              <form action={onSignOut} className="hidden lg:block">
+                <button
+                  type="submit"
+                  className="text-ink-soft hover:text-ink transition-colors tracking-[0.2em]"
+                >
+                  SIGN OUT
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
+            >
+              SIGN IN
+            </Link>
+          )}
           <Link href="/cart" className="hover:text-ink transition-colors">
             BAG{cartCount > 0 && ` (${cartCount})`}
           </Link>
@@ -100,12 +121,22 @@ export default function SiteHeader({
               <Link href="/cart" onClick={() => setOpen(false)}>
                 BAG{cartCount > 0 && ` (${cartCount})`}
               </Link>
-              <Link
-                href={isSignedIn ? "/account" : "/sign-in"}
-                onClick={() => setOpen(false)}
-              >
-                {isSignedIn ? "ACCOUNT" : "SIGN IN"}
-              </Link>
+                            {isSignedIn ? (
+                <>
+                  <Link href="/account" onClick={() => setOpen(false)}>
+                    ACCOUNT
+                  </Link>
+                  <form action={onSignOut}>
+                    <button type="submit" className="tracking-[0.2em]">
+                      SIGN OUT
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <Link href="/sign-in" onClick={() => setOpen(false)}>
+                  SIGN IN
+                </Link>
+              )}
               {isAdmin && (
                 <Link href="/admin" onClick={() => setOpen(false)}>
                   ADMIN

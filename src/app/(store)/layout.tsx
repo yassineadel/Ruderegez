@@ -1,8 +1,7 @@
-import { auth } from "@/lib/auth";
+import { auth, signOut  } from "@/lib/auth";
 import { getCartCount } from "@/modules/cart/service";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-
 /**
  * Wraps every customer-facing page. (auth) and /admin have their own layouts,
  * so the sign-in screen and the admin panel deliberately do NOT get this
@@ -18,12 +17,18 @@ export default async function StoreLayout({
 }) {
   const [session, cartCount] = await Promise.all([auth(), getCartCount()]);
 
+  async function handleSignOut() {
+    "use server";
+    await signOut({ redirectTo: "/" });
+  }
+  
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader
         isSignedIn={Boolean(session?.user)}
         isAdmin={session?.user?.role === "ADMIN"}
         cartCount={cartCount}
+        onSignOut={handleSignOut}
       />
       <div className="flex-1">{children}</div>
       <SiteFooter />
