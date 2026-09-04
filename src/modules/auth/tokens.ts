@@ -22,7 +22,7 @@ export function otpExpiry():Date{
 
 
 export function generateResetToken(): string {
-  // base64url — safe inside a query string with no escaping.
+  // base64url - safe inside a query string with no escaping.
   return randomBytes(32).toString("base64url");
 }
  

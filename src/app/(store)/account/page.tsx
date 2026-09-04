@@ -90,7 +90,7 @@ export default async function AccountOrdersPage() {
 
             {order.status === "PLACED" && (
               <p className="mt-5 text-xs text-ink-soft">
-                Waiting for your transfer — open this order for the payment
+                Waiting for your transfer - open this order for the payment
                 details.
               </p>
             )}

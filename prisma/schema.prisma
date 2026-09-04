@@ -1,5 +1,5 @@
 // =============================================================================
-// RUDEREGEZ — DATABASE SCHEMA
+// RUDEREGEZ - DATABASE SCHEMA
 // =============================================================================
 //
 // CONVENTIONS USED THROUGHOUT THIS FILE
@@ -40,9 +40,9 @@ enum UserRole {
   ADMIN
 }
 
-/// BRD 5.3 — audience is one of two independent category dimensions.
+/// BRD 5.3 - audience is one of two independent category dimensions.
 /// UNISEX products appear in BOTH the Men's and Women's listings (FR-25).
-/// Kits and organizers use NONE — they sit outside the audience system.
+/// Kits and organizers use NONE - they sit outside the audience system.
 enum Audience {
   MEN
   WOMEN
@@ -50,7 +50,7 @@ enum Audience {
   NONE
 }
 
-/// BRD 8 — the order lifecycle. Transitions are enforced in
+/// BRD 8 - the order lifecycle. Transitions are enforced in
 /// src/modules/orders/service.ts, not here.
 enum OrderStatus {
   PLACED
@@ -63,7 +63,7 @@ enum OrderStatus {
   CANCELLED
 }
 
-/// BRD 7.4 — three payment paths. No card gateway at launch.
+/// BRD 7.4 - three payment paths. No card gateway at launch.
 enum PaymentMethod {
   DEPOSIT_THEN_CASH_ON_DELIVERY
   FULL_INSTAPAY
@@ -76,7 +76,7 @@ enum PaymentProofStatus {
   REJECTED
 }
 
-/// BRD 6.3 — the image-upload custom request path.
+/// BRD 6.3 - the image-upload custom request path.
 enum CustomRequestStatus {
   SUBMITTED
   UNDER_REVIEW
@@ -87,7 +87,7 @@ enum CustomRequestStatus {
 }
 
 /// What kind of thing a cart line or order line actually is.
-/// Cart and order items are polymorphic — build this in from day one,
+/// Cart and order items are polymorphic - build this in from day one,
 /// retrofitting it later is expensive.
 enum ItemKind {
   CATALOG        // a normal product from the catalog
@@ -96,7 +96,7 @@ enum ItemKind {
 }
 
 // =============================================================================
-// AUTH  —  these four models are required by Auth.js v5's Prisma adapter.
+// AUTH  -  these four models are required by Auth.js v5's Prisma adapter.
 //          Their field names are fixed by the library. Do not rename them.
 // =============================================================================
 
@@ -113,7 +113,7 @@ model User {
 
   role          UserRole  @default(CUSTOMER)
 
-  /// BRD 9.3 — admin can block a customer from signing in or ordering.
+  /// BRD 9.3 - admin can block a customer from signing in or ordering.
   isBlocked     Boolean   @default(false)
   blockedReason String?
   blockedAt     DateTime?
@@ -160,7 +160,7 @@ model Account {
   @@index([userId])
 }
 
-/// Database-backed sessions (not JWT). FR-06 — user stays signed in
+/// Database-backed sessions (not JWT). FR-06 - user stays signed in
 /// across visits. Revoking access = deleting the row.
 model Session {
   id           String   @id @default(cuid())
@@ -193,7 +193,7 @@ enum TokenType {
 // CATALOG
 // =============================================================================
 
-/// BRD 5.3 — the second category dimension, kept as a TABLE rather than an
+/// BRD 5.3 - the second category dimension, kept as a TABLE rather than an
 /// enum because the client hasn't confirmed the full list yet. The admin can
 /// add "Anklet" or "Cufflinks" without a code change or a migration.
 model ProductType {
@@ -220,7 +220,7 @@ model Product {
   audience Audience    @default(UNISEX)
 
   // --- PRICING INPUTS (BRD 7.1) -------------------------------------------
-  // price = weightMg * silverRate * factorBp  — computed live, never stored.
+  // price = weightMg * silverRate * factorBp  - computed live, never stored.
   // Changing the store silver rate updates every displayed price instantly.
 
   /// Admin-set estimated weight in milligrams. 5.2 g -> 5200
@@ -230,27 +230,27 @@ model Product {
   /// 10000 = 1.0x   25000 = 2.5x
   factorBp Int @default(10000)
 
-  /// FR-84 — kits and non-silver accessories bypass the formula entirely
+  /// FR-84 - kits and non-silver accessories bypass the formula entirely
   /// and use a fixed price instead.
   isFlatPrice    Boolean @default(false)
   flatPriceMinor Int?
 
-  /// FR-33 — every piece is made to order (BRD 1.4). There is no stock,
+  /// FR-33 - every piece is made to order (BRD 1.4). There is no stock,
   /// no availability state. Lead time replaces both.
   leadTimeDays Int @default(7)
 
   // --- MERCHANDISING -------------------------------------------------------
 
-  /// FR-112 — hide from the site without deleting.
+  /// FR-112 - hide from the site without deleting.
   isHidden   Boolean @default(false)
   isFeatured Boolean @default(false)
   isTrending Boolean @default(false)
 
-  /// FR-13 downgraded — hand-picked rather than computed, so the homepage
+  /// FR-13 downgraded - hand-picked rather than computed, so the homepage
   /// isn't empty in the first weeks after launch.
   isBestSeller Boolean @default(false)
 
-  /// FR-113 — soft delete. Deleted products stay visible in past orders
+  /// FR-113 - soft delete. Deleted products stay visible in past orders
   /// because OrderItem snapshots its own copy of everything it needs.
   deletedAt DateTime?
 
@@ -281,7 +281,7 @@ model ProductImage {
   @@index([productId])
 }
 
-/// FR-32 — sizes where applicable. A product with zero rows here has no
+/// FR-32 - sizes where applicable. A product with zero rows here has no
 /// size selector; the service layer enforces that a size IS chosen when
 /// rows exist.
 model ProductSize {
@@ -301,11 +301,11 @@ model ProductSize {
 }
 
 // =============================================================================
-// CUSTOMIZATION STUDIO  —  BRD 6
+// CUSTOMIZATION STUDIO  -  BRD 6
 // =============================================================================
 
 /// PATH A (2D builder). The palette of shapes the customer may combine.
-/// FR-65 — customers can only build from shapes the brand supplies.
+/// FR-65 - customers can only build from shapes the brand supplies.
 model Shape {
   id          String  @id @default(cuid())
   name        String
@@ -322,12 +322,12 @@ model Shape {
   updatedAt DateTime @updatedAt
 }
 
-/// BRD 6.2 — each shape carries a stored weight per available size.
+/// BRD 6.2 - each shape carries a stored weight per available size.
 ///
 /// BRD 12.2 (THE WEIGHT RANGE PROBLEM): the client supplied weights as
 /// ranges ("2-4 g"). A range cannot produce a price. We store the MIN and
 /// MAX for the admin's reference, but `weightMg` is the single number
-/// actually charged — seeded as the midpoint, and editable.
+/// actually charged - seeded as the midpoint, and editable.
 /// The 20% tolerance in BRD 7.2 absorbs variation in both directions.
 model ShapeSize {
   id      String @id @default(cuid())
@@ -337,7 +337,7 @@ model ShapeSize {
   /// The number actually used in pricing. Midpoint of the range.
   weightMg Int
 
-  /// Reference only — what the client originally quoted.
+  /// Reference only - what the client originally quoted.
   weightMinMg Int?
   weightMaxMg Int?
 
@@ -349,14 +349,14 @@ model ShapeSize {
   @@index([shapeId])
 }
 
-/// BRD 6.2 — fonts available for engraving.
+/// BRD 6.2 - fonts available for engraving.
 /// Latin AND Arabic are both supported. This is unrelated to the site
 /// being English-only: engraving a name in Arabic is a rendering task,
 /// not an interface translation.
 model Font {
   id        String  @id @default(cuid())
   name      String  @unique
-  /// Self-hosted webfont file — do not hotlink, and check the licence.
+  /// Self-hosted webfont file - do not hotlink, and check the licence.
   fileUrl   String
   /// Whether this font can render Arabic glyphs.
   supportsArabic Boolean @default(false)
@@ -386,12 +386,12 @@ model CustomRequest {
   quotedAt          DateTime?
   quotedByUserId    String?
 
-  /// FR-74 — admin can reject with a reason.
+  /// FR-74 - admin can reject with a reason.
   /// BRD 6.3 flags copyright as a required rejection ground: a customer
   /// uploading a club crest or brand logo puts the legal risk on the brand.
   rejectionReason String? @db.Text
 
-  /// FR-73 — customer accepts or declines. An accepted quote becomes
+  /// FR-73 - customer accepts or declines. An accepted quote becomes
   /// a cart line, then an order.
   respondedAt DateTime?
 
@@ -423,10 +423,10 @@ model CustomRequestImage {
 }
 
 // =============================================================================
-// CART  —  BRD 5.5
+// CART  -  BRD 5.5
 // =============================================================================
 
-/// One cart per user. FR-42 — the cart persists across browser sessions.
+/// One cart per user. FR-42 - the cart persists across browser sessions.
 ///
 /// Guests get a cart keyed by an anonymous cookie token; on sign-in the
 /// guest cart is merged into the user cart and the guest row is deleted.
@@ -461,7 +461,7 @@ model CartItem {
   ///
   /// CRITICAL: coordinates are NORMALIZED (0..1), never pixels, and the
   /// object carries a `version` field. This is what lets the future 3D
-  /// builder read V1 designs and lift them into space — a renderer swap
+  /// builder read V1 designs and lift them into space - a renderer swap
   /// rather than a rewrite.
   designJson Json?
   /// Flattened preview image, for the cart, admin, and the workshop.
@@ -471,7 +471,7 @@ model CartItem {
   customRequestId String?
 
   /// DISPLAY ONLY. The real price is recalculated and FROZEN when the
-  /// order is placed (FR-83). A stale cart price is harmless — BRD 5.5
+  /// order is placed (FR-83). A stale cart price is harmless - BRD 5.5
   /// says the customer is shown a notice at checkout if it has moved.
   unitPriceMinor Int
 
@@ -488,7 +488,7 @@ model CartItem {
 }
 
 // =============================================================================
-// ORDERS  —  BRD 8
+// ORDERS  -  BRD 8
 // =============================================================================
 
 model Order {
@@ -507,7 +507,7 @@ model Order {
   addressNotes  String?
 
   // --- MONEY SNAPSHOT ------------------------------------------------------
-  /// FR-83 — the silver rate in force at the moment this order was placed.
+  /// FR-83 - the silver rate in force at the moment this order was placed.
   /// Stored so the order can always be re-derived and audited.
   silverRateMinorSnapshot Int
 
@@ -515,7 +515,7 @@ model Order {
   deliveryFeeMinor Int
   totalMinor       Int
 
-  /// BRD 7.4 — deposit is a PERCENTAGE of order value. Confirmed 50%,
+  /// BRD 7.4 - deposit is a PERCENTAGE of order value. Confirmed 50%,
   /// same for standard and custom. Snapshotted so changing the setting
   /// later never alters an existing order.
   depositPercentSnapshot Int
@@ -524,7 +524,7 @@ model Order {
 
   paymentMethod PaymentMethod
 
-  /// BRD 7.2 — the 20% weight tolerance. Set true only in the rare
+  /// BRD 7.2 - the 20% weight tolerance. Set true only in the rare
   /// FR-86 case where the finished piece exceeded the estimate by more
   /// than 20% and the customer approved the extra cost.
   toleranceExceeded         Boolean @default(false)
@@ -553,9 +553,9 @@ model Order {
 /// Every field ending in "Snapshot" is a copy taken at the moment of purchase.
 /// This is what makes all of the following true at once:
 ///
-///   FR-83  — the price is fixed when the order is placed and never moves
-///   FR-113 — a deleted product still displays correctly in past orders
-///   BRD 9.2 — updating the silver rate reprices the CATALOG, not history
+///   FR-83  - the price is fixed when the order is placed and never moves
+///   FR-113 - a deleted product still displays correctly in past orders
+///   BRD 9.2 - updating the silver rate reprices the CATALOG, not history
 ///
 /// productId is kept as a nullable link for reporting and best-seller counts
 /// only. Nothing about displaying or pricing this line depends on it.
@@ -564,7 +564,7 @@ model OrderItem {
   orderId String
   kind    ItemKind @default(CATALOG)
 
-  /// Reporting link only. Nullable — the product may be deleted later.
+  /// Reporting link only. Nullable - the product may be deleted later.
   productId String?
 
   // --- SNAPSHOTTED PRODUCT DATA -------------------------------------------
@@ -578,7 +578,7 @@ model OrderItem {
   factorBpSnapshot   Int
   silverRateMinorSnapshot Int
 
-  /// BRD 6.2 — engraving is charged as a separate labour fee, NOT as added
+  /// BRD 6.2 - engraving is charged as a separate labour fee, NOT as added
   /// weight. It reflects hand precision work and the risk of ruining the
   /// piece, not silver used.
   engravingFeeMinor Int @default(0)
@@ -602,7 +602,7 @@ model OrderItem {
   @@index([productId])
 }
 
-/// FR-102 — every status change records WHO made it and WHEN.
+/// FR-102 - every status change records WHO made it and WHEN.
 /// Append-only. Rows are never updated or deleted.
 model OrderStatusEvent {
   id          String       @id @default(cuid())
@@ -620,7 +620,7 @@ model OrderStatusEvent {
 }
 
 // =============================================================================
-// PAYMENTS  —  BRD 7.4
+// PAYMENTS  -  BRD 7.4
 // =============================================================================
 
 /// No card gateway. The customer transfers by InstaPay and uploads proof.
@@ -638,7 +638,7 @@ model PaymentProof {
   referenceNumber String?
   amountMinor     Int
 
-  /// FR-95 — every confirmation is permanently recorded with the admin's
+  /// FR-95 - every confirmation is permanently recorded with the admin's
   /// identity and a timestamp.
   reviewedByUserId String?
   reviewedAt       DateTime?
@@ -664,10 +664,10 @@ model PaymentProof {
 /// answer, and the client can change any of it themselves after handover.
 ///
 /// Seeded keys (see prisma/seed.ts):
-///   silverRatePerGramMinor   11368   (113.68 EGP — client-confirmed)
+///   silverRatePerGramMinor   11368   (113.68 EGP - client-confirmed)
 ///   depositPercent           50      (client-confirmed, same for custom)
-///   deliveryFeeMinor         8000    (80 EGP — client-confirmed)
-///   engravingFeeMinor        ?       (PLACEHOLDER — rule not yet supplied)
+///   deliveryFeeMinor         8000    (80 EGP - client-confirmed)
+///   engravingFeeMinor        ?       (PLACEHOLDER - rule not yet supplied)
 ///   engravingMaxChars        20      (PLACEHOLDER)
 ///   quoteSlaDaysMin          2
 ///   quoteSlaDaysMax          5
@@ -682,7 +682,7 @@ model Setting {
 }
 
 // =============================================================================
-// AUDIT LOG  —  NFR-08
+// AUDIT LOG  -  NFR-08
 // =============================================================================
 
 /// "All admin actions affecting money, prices, or accounts are permanently
@@ -723,11 +723,11 @@ model AuditLog {
 // DELIBERATELY NOT IN V1
 // =============================================================================
 //
-//   Review          — FR-36 to FR-38. Cut to release 1.1. Verified-purchaser
+//   Review          - FR-36 to FR-38. Cut to release 1.1. Verified-purchaser
 //                     logic plus moderation is ~1.5 days and a brand-new
 //                     store has no reviews on launch day anyway.
 //
-//   DiscountCode    — cut to 1.1. Not needed to take money.
+//   DiscountCode    - cut to 1.1. Not needed to take money.
 //
 // Adding a table later is a migration, not a redesign. That is precisely
 // why these are safe to defer and the snapshot decisions above are not.

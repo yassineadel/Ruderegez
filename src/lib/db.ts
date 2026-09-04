@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 /**
  * Prisma 7 requires a driver adapter.
- * The adapter gets the POOLED url — this is the running app.
+ * The adapter gets the POOLED url - this is the running app.
  * Migrations use DIRECT_URL via prisma.config.ts.
  */
 const adapter = new PrismaPg({

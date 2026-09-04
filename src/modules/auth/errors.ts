@@ -1,6 +1,6 @@
 /**
  * Error codes shared between the service (which throws them) and the actions
- * (which translate them). Deliberately NOT in actions.ts — that file is
+ * (which translate them). Deliberately NOT in actions.ts - that file is
  * "use server", and a "use server" file may only export async functions.
  */
 export const AUTH_ERRORS = {

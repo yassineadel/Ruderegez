@@ -42,7 +42,7 @@ export default async function ProductPage({
           </p>
 
           <div className="border-t border-line pt-6 space-y-2 text-xs text-ink-soft">
-            <p>Made to order — ready in about {product.leadTimeDays} days.</p>
+            <p>Made to order - ready in about {product.leadTimeDays} days.</p>
             <p>Handmade in Cairo from sterling silver.</p>
             {!product.isFlatPrice && (
               <p>

@@ -38,7 +38,7 @@ export function referenceExists(reference: string): Promise<boolean> {
 
 /**
  * Creates the order, its item snapshots, the opening status event, and empties
- * the cart — as ONE unit.
+ * the cart - as ONE unit.
  *
  * A cart emptied without an order created is a customer who has paid for
  * nothing. A transaction makes that state impossible.

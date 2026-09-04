@@ -1,17 +1,20 @@
 import Link from "next/link";
-import { listFeatured, listProductTypes } from "@/modules/catalog/service";
+import { listFeatured, listProductTypes, listTrending } from "@/modules/catalog/service";
 import ProductCard from "@/components/product-card";
+import HeroCarousel from "@/components/hero-carousel";
+
 
 export default async function HomePage() {
-  const [featured, types] = await Promise.all([
+   const [featured, types, trending] = await Promise.all([
     listFeatured(4),
     listProductTypes(),
+    listTrending(6),
   ]);
 
   return (
     <>
       {/* ---------------------------------------------------------------- */}
-      {/* HERO — text-led, so it holds up before real photography arrives.  */}
+      {/* HERO - text-led, so it holds up before real photography arrives.  */}
       {/* ---------------------------------------------------------------- */}
       <section className="relative">
         <div className="grid lg:grid-cols-2 min-h-[70vh]">
@@ -26,8 +29,7 @@ export default async function HomePage() {
                 to order.
               </h1>
               <p className="text-sm text-ink-soft leading-relaxed mb-10">
-                Every piece is made by hand after you order it. Nothing sits in
-                a warehouse, and nothing is mass produced.
+                Every piece is made by hand after you order it.
               </p>
               <Link
                 href="/products"
@@ -38,18 +40,32 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative bg-bone-deep min-h-[50vh] lg:min-h-0">
-            <img
-              src="/auth-hero.jpg"
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+                    <div className="relative bg-bone-deep min-h-[50vh] lg:min-h-0">
+            {trending.length > 0 ? (
+              <HeroCarousel
+                slides={trending
+                  .filter((p) => p.images[0])
+                  .map((p) => ({
+                    slug: p.slug,
+                    name: p.name,
+                    typeName: p.type.name,
+                    imageUrl: p.images[0].url,
+                    priceMinor: p.priceMinor,
+                  }))}
+              />
+            ) : (
+              <img
+                src="/auth-hero.jpg"
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
           </div>
         </div>
       </section>
 
       {/* ---------------------------------------------------------------- */}
-      {/* FEATURED — hand-picked in admin, so it is never empty by accident. */}
+      {/* FEATURED - hand-picked in admin, so it is never empty by accident. */}
       {/* ---------------------------------------------------------------- */}
       {featured.length > 0 && (
         <section className="px-6 lg:px-12 py-24">
@@ -95,7 +111,7 @@ export default async function HomePage() {
               <p>Solid 925 silver throughout. No plating, no filler.</p>
             </div>
             <div>
-              <p className="text-ink mb-2 tracking-[0.15em]">MADE BY HAND</p>
+              <p className="text-ink mb-2 tracking-[0.15em]">HANDMADE JEWELRY</p>
               <p>
                 Weights vary slightly between pieces. Prices account for that.
               </p>

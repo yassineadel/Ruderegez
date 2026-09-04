@@ -88,7 +88,7 @@ export interface ImageInput {
  * Creates a product with its sizes and images in one transaction.
  *
  * A product row without its sizes is a product whose price is wrong for every
- * size but one — worse than no product at all, because it looks finished.
+ * size but one - worse than no product at all, because it looks finished.
  */
 export function createProductTransaction(
   product: ProductWriteData,
@@ -129,8 +129,8 @@ export function createProductTransaction(
  * Sizes and images are REPLACED, not merged.
  *
  * The form sends the complete list it wants to exist. Working out which rows
- * were added, removed or reordered — and doing it correctly under concurrent
- * edits — is far more code than deleting and re-inserting a handful of rows.
+ * were added, removed or reordered - and doing it correctly under concurrent
+ * edits - is far more code than deleting and re-inserting a handful of rows.
  */
 export function updateProductTransaction(
   id: string,
@@ -174,7 +174,7 @@ export function setProductHidden(id: string, isHidden: boolean) {
   return prisma.product.update({ where: { id }, data: { isHidden } });
 }
 
-/** Soft delete — OrderItem keeps its productId link for reporting. */
+/** Soft delete - OrderItem keeps its productId link for reporting. */
 export function softDeleteProduct(id: string) {
   return prisma.product.update({
     where: { id },

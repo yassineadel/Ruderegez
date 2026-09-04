@@ -22,7 +22,7 @@ export interface PlaceOrderInput {
 /**
  * Creates an order from the current cart.
  *
- * The prices used are the ones the CUSTOMER WAS JUST SHOWN — getCartView
+ * The prices used are the ones the CUSTOMER WAS JUST SHOWN - getCartView
  * computes them from the live rate, and the cart page rendered from exactly
  * this. `expectedTotalMinor` guards the seconds between page load and submit:
  * if the rate moved in that window we stop and make them confirm rather than
@@ -87,7 +87,7 @@ export async function placeOrder(input: PlaceOrderInput) {
       imageUrlSnapshot: line.imageUrl,
       sizeSnapshot: line.size || null,
 
-      // The INPUTS, not just the answer — so any line can be recomputed and
+      // The INPUTS, not just the answer - so any line can be recomputed and
       // explained to a customer months later.
       weightMgSnapshot: size?.weightMg ?? product?.weightMg ?? 0,
       factorBpSnapshot: product?.factorBp ?? 0,

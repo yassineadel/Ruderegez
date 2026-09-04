@@ -12,7 +12,7 @@ import {
 /**
  * Which statuses may follow which.
  *
- * OrderStatusEvent is append-only — a wrong transition cannot be tidied up
+ * OrderStatusEvent is append-only - a wrong transition cannot be tidied up
  * afterwards, only followed by another event explaining it. So the rules are
  * enforced BEFORE the write, not corrected after.
  *
@@ -67,7 +67,7 @@ export async function changeStatus(input: {
     throw new Error("INVALID_TRANSITION");
   }
 
-  // Cancelling requires a reason — otherwise nobody can explain it later.
+  // Cancelling requires a reason - otherwise nobody can explain it later.
   if (input.toStatus === "CANCELLED" && !input.note?.trim()) {
     throw new Error("REASON_REQUIRED");
   }

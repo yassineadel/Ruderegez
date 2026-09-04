@@ -35,7 +35,7 @@ function SignInForm() {
       });
 
       // ONE message for every failure: no such user, wrong password,
-      // unverified, blocked. Same principle as signup — nothing leaks.
+      // unverified, blocked. Same principle as signup - nothing leaks.
       if (!result || result.error) {
         setError("Incorrect email or password.");
         return;

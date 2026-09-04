@@ -101,7 +101,7 @@ export default function CheckoutForm({
           </p>
           <textarea
             className={field + " min-h-20 resize-y"}
-            placeholder="Delivery notes (optional) — landmarks, best time to call"
+            placeholder="Delivery notes (optional) - landmarks, best time to call"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />

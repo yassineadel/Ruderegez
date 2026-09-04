@@ -57,7 +57,7 @@ export async function requestResetAction(raw: unknown): Promise<Result> {
     return { ok: true };
   } catch (err) {
     console.error("[requestResetAction]", err);
-    // Even a genuine failure returns ok — an error here would reveal that
+    // Even a genuine failure returns ok - an error here would reveal that
     // something happened for this address and not for others.
     return { ok: true };
   }

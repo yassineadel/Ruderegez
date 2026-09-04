@@ -7,6 +7,7 @@ import {
   findProductBySlug,
   findFeaturedProducts,
   findProductTypes,
+  findTrendingProducts,
   type ProductCard,
   type ProductDetail,
   type ProductFilters,
@@ -15,7 +16,7 @@ import {
 // ============================================================================
 //  TYPES
 // ============================================================================
-//  Prices are never stored (BRD 7.1) — they are computed from the live silver
+//  Prices are never stored (BRD 7.1) - they are computed from the live silver
 //  rate on every render. So the types the pages consume are the repository's
 //  rows PLUS a price that only exists in memory.
 // ============================================================================
@@ -85,5 +86,16 @@ export async function listFeatured(take = 8): Promise<PricedProductCard[]> {
   }));
 }
 
-/** Straight pass-through — the filter bar needs the categories. */
+/** Straight pass-through - the filter bar needs the categories. */
 export { findProductTypes as listProductTypes };
+
+export async function listTrending(take = 6): Promise<PricedProductCard[]> {
+  const settings = await getPricingSettings();
+  const products = await findTrendingProducts(take);
+
+  return products.map((p) => ({
+    ...p,
+    priceMinor: priceProduct(p, settings),
+  }));
+}
+

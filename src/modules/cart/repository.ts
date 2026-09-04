@@ -42,7 +42,7 @@ export function countCartItems(cartId: string): Promise<number> {
  *
  * `size` is "" and never null for a product without sizes. Postgres treats
  * two NULLs as different values, so a nullable column in a unique index does
- * not prevent duplicates — empty strings do compare equal, and the constraint
+ * not prevent duplicates - empty strings do compare equal, and the constraint
  * works as intended.
  */
 export function upsertCartItem(data: {

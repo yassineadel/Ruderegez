@@ -32,7 +32,7 @@ function ResetPasswordForm() {
   function handleSubmit() {
     setError(null);
 
-    // Checked here, not in Zod — the confirm field never leaves the browser.
+    // Checked here, not in Zod - the confirm field never leaves the browser.
     if (password !== confirm) {
       setError("The two passwords do not match.");
       return;

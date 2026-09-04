@@ -63,7 +63,7 @@ export async function countByStatus(): Promise<Record<string, number>> {
  * A status change is TWO writes: the order's current status, and an
  * append-only event recording who moved it and when (FR-102).
  *
- * They go together or not at all — an order whose status changed with no
+ * They go together or not at all - an order whose status changed with no
  * event is a change nobody can explain.
  */
 export function applyStatusChange(data: {
@@ -125,7 +125,7 @@ export function recordPayment(data: {
         toStatus: "CONFIRMED",
         actorUserId: data.actorUserId,
         note: data.referenceNumber
-          ? `Payment confirmed — ref ${data.referenceNumber}`
+          ? `Payment confirmed - ref ${data.referenceNumber}`
           : "Payment confirmed",
       },
     }),

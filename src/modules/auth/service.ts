@@ -41,7 +41,7 @@ export async function startSignup(input: SignupInput): Promise<void> {
 
   const passwordHash = await hashPassword(password);
 
-  // An account already exists — tell the REAL owner, tell the requester nothing.
+  // An account already exists - tell the REAL owner, tell the requester nothing.
   const existing = await findUserByEmail(email);
   if (existing && (existing.emailVerified || existing.passwordHash)) {
     const dupmail = duplicateSignupEmail();
@@ -108,7 +108,7 @@ function baseUrl(): string {
 }
 
 /**
- * STEP 1 — issue a reset link.
+ * STEP 1 - issue a reset link.
  *
  * Returns void in EVERY case, including when there is no such account. The
  * caller cannot distinguish "sent" from "no account", which is the whole
@@ -126,7 +126,7 @@ export async function requestPasswordReset(input: RequestResetInput): Promise<vo
     return;
   }
 
-  // Requesting a new link kills the old one — a reset email should never leave
+  // Requesting a new link kills the old one - a reset email should never leave
   // two working links in an inbox.
   await deleteResetTokens(email);
 
@@ -145,7 +145,7 @@ export async function requestPasswordReset(input: RequestResetInput): Promise<vo
 }
 
 /**
- * STEP 2 — consume the link and set the new password.
+ * STEP 2 - consume the link and set the new password.
  *
  * Unlike step 1 this DOES throw, because by now the user is holding a link we
  * gave them. "That link has expired" is useful, and it leaks nothing an
@@ -173,7 +173,7 @@ export async function resetPassword(input: ResetPasswordInput): Promise<void> {
   const passwordHash = await hashPassword(password);
   await updateUserPassword(user.id, passwordHash);
 
-  // Burn the token — single use, always.
+  // Burn the token - single use, always.
   await deleteResetTokens(record.identifier);
 
   const mail = passwordChangedEmail();

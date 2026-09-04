@@ -11,7 +11,7 @@ export function fromMinor(m: Minor): number {
   return m / 100;
 }
 
-/** 231907  ->  "EGP 2,319.07"  — for display only */
+/** 231907  ->  "EGP 2,319.07"  - for display only */
 export function formatEGP(m: Minor): string {
   return new Intl.NumberFormat("en-EG", {
     style: "currency",

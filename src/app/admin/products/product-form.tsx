@@ -139,12 +139,12 @@ export default function ProductForm({
                   set("name", e.target.value);
                   if (!slugEdited) set("slug", slugify(e.target.value));
                 }}
-                placeholder="Fine Chain Bracelet"
+                placeholder="Product Name"
               />
             </label>
 
             <label className="block">
-              <span className={label}>URL SLUG</span>
+              <span className={label} >URL SLUG</span>
               <input
                 className={field}
                 value={f.slug}
@@ -155,7 +155,7 @@ export default function ProductForm({
               />
               <span className="block text-xs text-ink-soft mt-2">
                 /products/{f.slug || "…"}
-                {isEdit && " — changing this breaks existing links."}
+                {isEdit && " - changing this breaks existing links."}
               </span>
             </label>
 
@@ -200,7 +200,7 @@ export default function ProductForm({
                 </select>
                 <span className="block text-xs text-ink-soft mt-2">
                   &quot;Not applicable&quot; keeps a piece out of both the
-                  men&apos;s and women&apos;s listings — for care kits and
+                  men&apos;s and women&apos;s listings - for care kits and
                   similar.
                 </span>
               </label>
@@ -299,7 +299,7 @@ export default function ProductForm({
               <div key={i} className="flex gap-3 items-start">
                 <input
                   className={field + " flex-1"}
-                  placeholder="Label — e.g. 18 cm"
+                  placeholder="Label - e.g. 18 cm"
                   value={s.label}
                   onChange={(e) => {
                     const next = [...f.sizes];
@@ -387,7 +387,7 @@ export default function ProductForm({
                   )}
                   <input
                     className={field}
-                    placeholder="Alt text — describe the photo (optional)"
+                    placeholder="Alt text - describe the photo (optional)"
                     value={img.alt}
                     onChange={(e) => {
                       const next = [...f.images];

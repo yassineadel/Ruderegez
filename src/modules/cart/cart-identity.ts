@@ -11,7 +11,7 @@ const THIRTY_DAYS = 60 * 60 * 24 * 30;
  * READ-ONLY. Safe to call while a page renders.
  *
  * Returns null rather than creating anything, because a page render is not
- * allowed to set cookies — Next.js has already sent the headers by then.
+ * allowed to set cookies - Next.js has already sent the headers by then.
  * An empty cart page is the correct thing to show a visitor who has none.
  */
 export async function findCurrentCart(): Promise<Cart | null> {
@@ -31,7 +31,7 @@ export async function findCurrentCart(): Promise<Cart | null> {
  * READ OR CREATE. Only callable from a Server Action or Route Handler,
  * because it may set a cookie.
  *
- * Called when someone adds to their bag — at that point they need a cart to
+ * Called when someone adds to their bag - at that point they need a cart to
  * exist, whether or not they have an account.
  */
 export async function getOrCreateCart(): Promise<Cart> {
@@ -55,7 +55,7 @@ export async function getOrCreateCart(): Promise<Cart> {
     const existing = await prisma.cart.findUnique({
       where: { guestToken: token },
     });
-    // The cookie can outlive the row — an old cart, a database reset. Fall
+    // The cookie can outlive the row - an old cart, a database reset. Fall
     // through and issue a fresh one rather than failing.
     if (existing) return existing;
   }
@@ -78,7 +78,7 @@ export async function getOrCreateCart(): Promise<Cart> {
 /**
  * Moves a guest cart into the user's cart after sign-in (FR-42).
  *
- * Not wired up yet — call it from the sign-in flow once the cart works.
+ * Not wired up yet - call it from the sign-in flow once the cart works.
  * Quantities add together; the guest cart is deleted afterwards.
  */
 export async function mergeGuestCart(userId: string): Promise<void> {
@@ -101,7 +101,7 @@ export async function mergeGuestCart(userId: string): Promise<void> {
 
     for (const item of guestCart.items) {
     // Only catalog items merge through this constraint. A custom design has
-    // no productId and is outside it entirely — that path arrives with the
+    // no productId and is outside it entirely - that path arrives with the
     // 2D builder.
     if (!item.productId) continue;
 

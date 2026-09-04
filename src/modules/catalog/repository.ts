@@ -4,7 +4,7 @@ import type { Prisma, ProductType } from "@/generated/prisma/client";
 // ============================================================================
 //  TYPES
 // ============================================================================
-//  A product fetched with `include` is wider than the bare `Product` row —
+//  A product fetched with `include` is wider than the bare `Product` row -
 //  it carries its images, sizes and type. ProductGetPayload derives that
 //  shape from the query, so the type can never drift from what is fetched.
 // ============================================================================
@@ -65,7 +65,7 @@ export function findProducts(filters: ProductFilters): Promise<ProductCard[]> {
   });
 }
 
-/** The total ignoring pagination — the grid needs it to render page numbers. */
+/** The total ignoring pagination - the grid needs it to render page numbers. */
 export function countProducts(filters: ProductFilters): Promise<number> {
   return prisma.product.count({ where: buildWhere(filters) });
 }
@@ -83,7 +83,7 @@ export function findFeaturedProducts(take = 8): Promise<ProductCard[]> {
 }
 
 /**
- * Shared by findProducts and countProducts so the two can never disagree —
+ * Shared by findProducts and countProducts so the two can never disagree -
  * a filter applied to the list but not the count would give you page numbers
  * for products that aren't there.
  */
@@ -110,4 +110,16 @@ function buildWhere(filters: ProductFilters): Prisma.ProductWhereInput {
   }
 
   return where;
+}
+
+export function findTrendingProducts(take = 6): Promise<ProductCard[]> {
+  return prisma.product.findMany({
+    where: { ...VISIBLE, isTrending: true },
+    include: {
+      images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }] },
+      type: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take,
+  });
 }

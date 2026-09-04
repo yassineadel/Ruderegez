@@ -11,7 +11,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
 
   session: {
-    strategy: "jwt",           // forced by Credentials — Option A
+    strategy: "jwt",           // forced by Credentials - Option A
     maxAge: 15 * 60,           // 15 min. Blocking takes effect within this.
   },
 
@@ -38,7 +38,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({ where: { email } });
 
-        // Every failure returns null — same response for "no such user",
+        // Every failure returns null - same response for "no such user",
         // "wrong password", "not verified", "blocked". No enumeration.
         if (!user?.passwordHash) return null;
         if (!user.emailVerified) return null;

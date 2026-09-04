@@ -107,8 +107,8 @@ export const SETTING_GROUPS : SettingGroup[] = [
     fields: [
       { key: "defaultLeadTimeDays", label: "Standard order lead time", kind: "int", help: "Days.", min: 0, max: 365 },
       { key: "customLeadTimeDays", label: "Custom order lead time", kind: "int", help: "Days.", min: 0, max: 365 },
-      { key: "quoteSlaDaysMin", label: "Quote turnaround — fastest", kind: "int", help: "Days. Shown as a range on submission.", min: 0, max: 365 },
-      { key: "quoteSlaDaysMax", label: "Quote turnaround — slowest", kind: "int", help: "Days. Must not be less than the fastest.", min: 0, max: 365 },
+      { key: "quoteSlaDaysMin", label: "Quote turnaround - fastest", kind: "int", help: "Days. Shown as a range on submission.", min: 0, max: 365 },
+      { key: "quoteSlaDaysMax", label: "Quote turnaround - slowest", kind: "int", help: "Days. Must not be less than the fastest.", min: 0, max: 365 },
     ],
   },
   {

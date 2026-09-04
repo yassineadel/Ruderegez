@@ -7,7 +7,7 @@ import SiteFooter from "@/components/site-footer";
  * so the sign-in screen and the admin panel deliberately do NOT get this
  * header and footer.
  *
- * The session and the bag count are read here, once, and passed down — so the
+ * The session and the bag count are read here, once, and passed down - so the
  * header stays a dumb component that renders what it is given.
  */
 export default async function StoreLayout({

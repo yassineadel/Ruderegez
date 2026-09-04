@@ -6,7 +6,7 @@ import { calculateitemprice } from "./calc";
 /**
  * Turns a product row into a price.
  *
- * Pure — no database. Settings come in as a parameter, which is what makes
+ * Pure - no database. Settings come in as a parameter, which is what makes
  * this unit-testable the way calc.ts is.
  */
 export function priceProduct( product: Product, settings: PricingSettings, size: ProductSize | null = null,): Minor {

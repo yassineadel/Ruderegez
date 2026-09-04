@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 /**
  * Client component only because of the mobile menu toggle. Whether the visitor
  * is signed in, and how many items are in their bag, are decided on the SERVER
- * and passed down as props — the header never queries anything itself.
+ * and passed down as props - the header never queries anything itself.
  */
 export default function SiteHeader({
   isSignedIn,
@@ -31,7 +31,7 @@ onSignOut: () => Promise<void>;
   return (
     <header className="sticky top-0 z-50 bg-bone/95 backdrop-blur border-b border-line">
       <div className="px-6 lg:px-12 h-16 lg:h-20 flex items-center justify-between">
-        {/* Left — desktop nav, mobile menu button */}
+        {/* Left - desktop nav, mobile menu button */}
         <nav className="hidden lg:flex items-center gap-8 text-[11px] tracking-[0.2em] flex-1">
           {links.map((l) => (
             <Link
@@ -52,7 +52,7 @@ onSignOut: () => Promise<void>;
           <Menu size={20} />
         </button>
 
-        {/* Centre — wordmark */}
+        {/* Centre - wordmark */}
         <Link
           href="/"
           className="font-display text-lg lg:text-xl tracking-[0.35em] lg:flex-1 lg:text-center"
@@ -60,7 +60,7 @@ onSignOut: () => Promise<void>;
           RUDEREGEZ
         </Link>
 
-        {/* Right — account and bag */}
+        {/* Right - account and bag */}
         <div className="flex items-center gap-5 lg:gap-7 text-[11px] tracking-[0.2em] lg:flex-1 lg:justify-end">
           {isAdmin && (
             <Link

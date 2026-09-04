@@ -16,7 +16,7 @@ const body = Jost({
 
 export const metadata = {
   title: "Ruderegez",
-  description: "Handmade silver jewellery — Cairo",
+  description: "Handmade silver jewellery - Cairo",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

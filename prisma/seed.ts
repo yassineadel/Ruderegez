@@ -1,11 +1,11 @@
 // =============================================================================
-// RUDEREGEZ — DATABASE SEED
+// RUDEREGEZ - DATABASE SEED
 // =============================================================================
 //
 // Run with:  npx prisma db seed
 //        or: npx tsx prisma/seed.ts
 //
-// This script is IDEMPOTENT — every write is an `upsert`, so running it
+// This script is IDEMPOTENT - every write is an `upsert`, so running it
 // twice does not create duplicates. You will re-run it often (after a
 // `db push --force-reset`, after changing a default), so this matters.
 //
@@ -50,7 +50,7 @@ const SETTINGS: Record<string, string> = {
   depositPercentCustom: "50", // client confirmed: same as standard
   deliveryFeeMinor: "8000", // 80.00 EGP
 
-  // --- PLACEHOLDERS — client still to confirm ----------------------------
+  // --- PLACEHOLDERS - client still to confirm ----------------------------
   // BRD 6.2: the engraving fee rule has not been supplied. Flat fee assumed
   // so the builder can display a price on Day 10. Swap the rule when it
   // arrives; only src/modules/pricing/calc.ts changes.
@@ -59,30 +59,30 @@ const SETTINGS: Record<string, string> = {
   engravingFeePerCharMinor: "2000", // 20.00 EGP per character
   engravingMaxChars: "20",
 
-  // BRD 7.2 — the tolerance that absorbs weight variation in both directions
+  // BRD 7.2 - the tolerance that absorbs weight variation in both directions
   weightTolerancePercent: "20",
 
-  // BRD 6.3 — quote turnaround shown to the customer on submission (FR-75)
+  // BRD 6.3 - quote turnaround shown to the customer on submission (FR-75)
   quoteSlaDaysMin: "2",
   quoteSlaDaysMax: "5",
 
-  // BRD 6.3 — upload limits, enforced in the service layer
+  // BRD 6.3 - upload limits, enforced in the service layer
   uploadMaxImages: "3",
   uploadMaxBytes: "5242880", // 5 MB
 
-  // Production lead times, per BRD 1.4 (no stock — lead time replaces it)
+  // Production lead times, per BRD 1.4 (no stock - lead time replaces it)
   defaultLeadTimeDays: "7",
   customLeadTimeDays: "14",
 
   // --- CLIENT TO SUPPLY --------------------------------------------------
   instapayHandle: "",
   instapayAccountName: "",
-  vodafoneCashNumber: "", // BRD 7.4 — raised, not yet decided
+  vodafoneCashNumber: "", // BRD 7.4 - raised, not yet decided
   storeAddress: "",
   storeMapEmbedUrl: "",
   storePhone: "",
 
-  // Policy text (BRD 12.3). LAUNCH BLOCKER — legal documents, client's
+  // Policy text (BRD 12.3). LAUNCH BLOCKER - legal documents, client's
   // responsibility. Kept as settings so the client can edit without a deploy.
   policyReturns: "",
   policyTerms: "",
@@ -172,7 +172,7 @@ const PRODUCTS = [
     sizes: [],
   },
   {
-    // FR-84 — kits bypass the silver formula entirely and use a flat price.
+    // FR-84 - kits bypass the silver formula entirely and use a flat price.
     slug: "silver-care-kit",
     name: "Silver Care Kit",
     description:
@@ -193,7 +193,7 @@ const PRODUCTS = [
 // -----------------------------------------------------------------------------
 // Placeholder artwork. The client owes real SVG files with a weight per size.
 //
-// BRD 12.2 — the client supplied weights as RANGES. A range cannot produce a
+// BRD 12.2 - the client supplied weights as RANGES. A range cannot produce a
 // price. weightMg holds the MIDPOINT, which is what actually gets charged;
 // min and max are stored for the admin's reference only. The 20% tolerance
 // in BRD 7.2 absorbs movement in both directions.
@@ -232,7 +232,7 @@ const midpoint = (min: number, max: number) => Math.round((min + max) / 2);
 // FONTS (BRD 6.2)
 // -----------------------------------------------------------------------------
 // Latin AND Arabic are both supported for engraving. This is unrelated to the
-// site being English-only — engraving a name in Arabic is a rendering task,
+// site being English-only - engraving a name in Arabic is a rendering task,
 // not an interface translation.
 //
 // Real font files must be self-hosted and LICENCE-CHECKED before launch.
@@ -282,7 +282,7 @@ async function main() {
 
   // --- PRODUCT TYPES -------------------------------------------------------
   // BRD 5.3 leaves the full list "to confirm", which is exactly why this is
-  // a table rather than an enum — the client can add more without a migration.
+  // a table rather than an enum - the client can add more without a migration.
   const types = [
     { slug: "ring", name: "Ring" },
     { slug: "bracelet", name: "Bracelet" },

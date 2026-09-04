@@ -12,7 +12,7 @@ import { createHash } from "crypto";
  *      photo from a phone camera is exactly the wrong thing to route through
  *      one.
  *   2. The API secret stays on the server. The browser gets a signature that
- *      works for one upload, into one folder, for a few minutes — not a key
+ *      works for one upload, into one folder, for a few minutes - not a key
  *      that could be used for anything else.
  */
 
@@ -35,7 +35,7 @@ export interface UploadSignature {
  * the file itself and the api_key), sort them alphabetically, join as
  * key=value pairs with &, append the secret, and SHA-1 the result.
  *
- * The parameters sent with the upload must match EXACTLY what was signed —
+ * The parameters sent with the upload must match EXACTLY what was signed -
  * one extra field, or a different folder, and Cloudinary rejects it. That is
  * the point: the browser cannot upload anywhere we did not authorise.
  */
@@ -73,9 +73,9 @@ export function createUploadSignature(folder: UploadFolder): UploadSignature {
  * original 4MB photo stays untouched, and the grid asks for an 800px WebP
  * version by changing the URL. Nothing is re-uploaded or pre-generated.
  *
- *   f_auto  — WebP or AVIF where the browser supports it
- *   q_auto  — compression chosen per image
- *   w_800   — resized
+ *   f_auto  - WebP or AVIF where the browser supports it
+ *   q_auto  - compression chosen per image
+ *   w_800   - resized
  */
 export function cloudinaryUrl(
   url: string,

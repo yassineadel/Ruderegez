@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left — image. Hidden on mobile; the form is what matters there. */}
+      {/* Left - image. Hidden on mobile; the form is what matters there. */}
       <div className="relative hidden lg:block bg-bone-deep">
         <img
           src="/auth-hero.jpg"
@@ -23,11 +23,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </p>
 
         <p className="absolute bottom-12 left-12 text-[11px] tracking-[0.25em] text-ink-soft">
-          EGYPT — CAIRO
+          EGYPT - CAIRO
         </p>
       </div>
 
-      {/* Right — the form */}
+      {/* Right - the form */}
       <div className="flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
           {/* Wordmark for mobile, where the left panel is hidden */}

@@ -23,7 +23,7 @@ export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 //  PASSWORD RESET (FR-05)
 // ============================================================================
 
-/** Step 1 — "I forgot my password, here is my email." */
+/** Step 1 - "I forgot my password, here is my email." */
 export const requestResetSchema = z.object({
   email: z.string().trim().toLowerCase().email("Please enter a valid email"),
 });
@@ -31,7 +31,7 @@ export const requestResetSchema = z.object({
 export type RequestResetInput = z.infer<typeof requestResetSchema>;
 
 /**
- * Step 2 — "Here is the token from my link and my new password."
+ * Step 2 - "Here is the token from my link and my new password."
  *
  * The token is min(1) only. Its real validation is whether it matches a row
  * in the database, which is the service's job, not Zod's. Length rules here

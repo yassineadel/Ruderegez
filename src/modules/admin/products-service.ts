@@ -21,7 +21,7 @@ import { slugify } from "./slugify";
  *
  * Lowercase, spaces to hyphens, anything that isn't a letter, digit or hyphen
  * removed. Arabic and accented characters are stripped rather than
- * transliterated — a slug has to survive being typed into a URL bar.
+ * transliterated - a slug has to survive being typed into a URL bar.
  */
 
 export interface ProductFormInput {
@@ -31,13 +31,13 @@ export interface ProductFormInput {
   description: string;
   typeId: string;
     audience: "MEN" | "WOMEN" | "UNISEX" | "NONE";
-  /** Grams as typed by the admin — converted to milligrams here. */
+  /** Grams as typed by the admin - converted to milligrams here. */
   weightG: number;
-  /** A plain multiplier as typed, e.g. 2.6 — converted to basis points here. */
+  /** A plain multiplier as typed, e.g. 2.6 - converted to basis points here. */
   factor: number;
   leadTimeDays: number;
   isFlatPrice: boolean;
-  /** EGP as typed — converted to piastres here. */
+  /** EGP as typed - converted to piastres here. */
   flatPriceEgp: number | null;
   isHidden: boolean;
   isFeatured: boolean;
@@ -88,7 +88,7 @@ async function validate(input: ProductFormInput): Promise<{
   if (await slugTaken(slug, input.id)) throw new Error("SLUG_TAKEN");
 
   // A flat-priced product with no price is the one broken state priceProduct
-  // cannot recover from — it throws rather than showing a wrong number.
+  // cannot recover from - it throws rather than showing a wrong number.
   if (input.isFlatPrice) {
     if (input.flatPriceEgp === null || !(input.flatPriceEgp > 0)) {
       throw new Error("FLAT_PRICE_REQUIRED");
@@ -126,7 +126,7 @@ async function validate(input: ProductFormInput): Promise<{
       .filter((s) => s.label.trim())
       .map((s) => ({
         label: s.label.trim(),
-        // null means "same as the product" — the fallback priceProduct uses.
+        // null means "same as the product" - the fallback priceProduct uses.
         weightMg: s.weightG === null ? null : Math.round(s.weightG * 1000),
       })),
     images: input.images

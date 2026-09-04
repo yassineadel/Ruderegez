@@ -14,8 +14,8 @@ export default async function AdminDashboard() {
 
       <div className="grid gap-px bg-line border border-line sm:grid-cols-2 lg:grid-cols-3 max-w-4xl">
         <Stat label="Silver rate" value={`${formatEGP(p.silverRatePerGram)} / g`} />
-        <Stat label="Deposit — standard" value={`${p.depositPercent}%`} />
-        <Stat label="Deposit — custom" value={`${p.depositPercentCustom}%`} />
+        <Stat label="Deposit - standard" value={`${p.depositPercent}%`} />
+        <Stat label="Deposit - custom" value={`${p.depositPercentCustom}%`} />
         <Stat label="Delivery fee" value={formatEGP(p.deliveryFee)} />
         <Stat label="Weight tolerance" value={`${p.weightTolerancePercent}%`} />
         <Stat

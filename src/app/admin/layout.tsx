@@ -26,9 +26,10 @@ export default async function AdminLayout({
 
         <nav className="space-y-1">
           <NavLink href="/admin">Dashboard</NavLink>
-<NavLink href="/admin/orders">Orders</NavLink>
-<NavLink href="/admin/products">Products</NavLink>
-<NavLink href="/admin/settings">Settings</NavLink>
+          <NavLink href="/admin/orders">Orders</NavLink>
+          <NavLink href="/admin/products">Products</NavLink>
+          <NavLink href="/admin/categories">Categories</NavLink>
+          <NavLink href="/admin/settings">Settings</NavLink>
         </nav>
 
         <div className="mt-12 pt-6 border-t border-line">

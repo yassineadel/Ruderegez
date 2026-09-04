@@ -36,7 +36,7 @@ const EMPTY: CartView = { lines: [], itemCount: 0, subtotalMinor: 0 as Minor };
 
 /**
  * Prices are recomputed live from the current silver rate, NOT read from
- * `unitPriceMinor` — that column is a snapshot of what the customer saw when
+ * `unitPriceMinor` - that column is a snapshot of what the customer saw when
  * they added the item. When the two differ the line is flagged so checkout
  * can say so (BRD 5.5).
  */

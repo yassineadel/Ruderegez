@@ -1,6 +1,6 @@
 /**
  * Email templates for the auth flow.
- * Kept deliberately plain — real email HTML gets polished on Day 12.
+ * Kept deliberately plain - real email HTML gets polished on Day 12.
  */
 
 const wrap = (body: string) => `
@@ -13,7 +13,7 @@ const wrap = (body: string) => `
   </div>
 `;
 
-/** FR-02 — the code a new account must enter before it can be used. */
+/** FR-02 - the code a new account must enter before it can be used. */
 export function verificationEmail(code: string): { subject: string; html: string } {
   return {
     subject: "Your Ruderegez verification code",
@@ -33,7 +33,7 @@ export function verificationEmail(code: string): { subject: string; html: string
  * that already has an account.
  *
  * This exists so signup can reply identically whether or not the email is
- * taken — otherwise anyone could discover which addresses have accounts by
+ * taken - otherwise anyone could discover which addresses have accounts by
  * trying them one at a time (account enumeration).
  *
  * Contains no code and no action link. Informational only.
@@ -52,7 +52,7 @@ export function duplicateSignupEmail(): { subject: string; html: string } {
 }
 
 /**
- * FR-05 — the reset link.
+ * FR-05 - the reset link.
  *
  * The URL carries the RAW token. Only its hash is in the database, so this
  * email is the one and only place the raw value ever exists.
@@ -74,7 +74,7 @@ export function passwordResetEmail(url: string): { subject: string; html: string
         Or paste this into your browser:<br />${url}
       </p>
       <p>The link expires in 30 minutes and can only be used once.</p>
-      <p>If you did not request this, you can safely ignore this email — your
+      <p>If you did not request this, you can safely ignore this email - your
       password has not changed.</p>
     `),
   };
