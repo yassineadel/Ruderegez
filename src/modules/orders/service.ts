@@ -6,7 +6,12 @@ import { findCurrentCart } from "@/modules/cart/cart-identity";
 import { prisma } from "@/lib/db";
 import type { PaymentMethod } from "@/generated/prisma/client";
 import { generateOrderReference } from "./reference";
-import { createOrderTransaction, referenceExists } from "./repository";
+import {
+  createOrderTransaction,
+  referenceExists,
+  findOrderByReference,
+  createPaymentProof,
+} from "./repository";
 
 export interface PlaceOrderInput {
   customerName: string;
@@ -138,4 +143,29 @@ export async function placeOrder(input: PlaceOrderInput) {
   });
 
   return { reference: order.reference, id: order.id };
+}
+
+export async function submitPaymentProof(input: {
+  reference: string;
+  screenshotUrl: string;
+  referenceNumber?: string;
+}) {
+  const user = await requireUser();
+
+  const order = await findOrderByReference(input.reference);
+  if (!order) throw new Error("ORDER_NOT_FOUND");
+  if (order.userId !== user.id) throw new Error("ORDER_NOT_FOUND");
+
+  if (order.status !== "PLACED") throw new Error("ALREADY_SUBMITTED");
+
+  if (!input.screenshotUrl.startsWith("https://res.cloudinary.com/")) {
+    throw new Error("INVALID_UPLOAD");
+  }
+
+  await createPaymentProof({
+    orderId: order.id,
+    screenshotUrl: input.screenshotUrl,
+    amountMinor: order.depositDueMinor,
+    referenceNumber: input.referenceNumber?.trim() || undefined,
+  });
 }

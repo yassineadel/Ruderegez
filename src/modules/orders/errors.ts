@@ -19,6 +19,9 @@ const MESSAGES: Record<string, string> = {
     "The silver rate changed while you were checking out. Please review the new total and confirm.",
   [ORDER_ERRORS.REFERENCE_COLLISION]: "Something went wrong placing your order. Please try again.",
   [ORDER_ERRORS.NOT_SIGNED_IN]: "Please sign in to place your order.",
+    ORDER_NOT_FOUND: "We couldn't find that order.",
+  ALREADY_SUBMITTED: "You've already sent proof for this order. We're checking it now.",
+  INVALID_UPLOAD: "That upload didn't work. Please try again.",
 };
 
 export function toOrderMessage(code: string): string {

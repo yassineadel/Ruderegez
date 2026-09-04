@@ -69,3 +69,34 @@ export function createOrderTransaction(data: {
     return order;
   });
 }
+
+export function createPaymentProof(data: {
+  orderId: string;
+  screenshotUrl: string;
+  amountMinor: number;
+  referenceNumber?: string;
+}) {
+  return prisma.$transaction([
+    prisma.paymentProof.create({
+      data: {
+        orderId: data.orderId,
+        status: "PENDING",
+        screenshotUrl: data.screenshotUrl,
+        amountMinor: data.amountMinor,
+        referenceNumber: data.referenceNumber,
+      },
+    }),
+    prisma.order.update({
+      where: { id: data.orderId },
+      data: { status: "PAYMENT_UNDER_REVIEW" },
+    }),
+    prisma.orderStatusEvent.create({
+      data: {
+        orderId: data.orderId,
+        fromStatus: "PLACED",
+        toStatus: "PAYMENT_UNDER_REVIEW",
+        note: "Customer uploaded payment proof.",
+      },
+    }),
+  ]);
+}

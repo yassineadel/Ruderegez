@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getOrder, allowedNext } from "@/modules/admin/orders-service";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 import OrderControls from "./order-controls";
 
 const LABEL: Record<string, string> = {
@@ -28,6 +29,12 @@ export default async function AdminOrderPage({
   const next = allowedNext(order.status);
   const awaitingPayment =
     order.status === "PLACED" || order.status === "PAYMENT_UNDER_REVIEW";
+
+  // If the customer uploaded proof, default the confirm box to what they say
+  // they sent — he is verifying their claim, not typing a fresh number.
+  const claimedMinor =
+    order.paymentProofs.find((p) => p.status === "PENDING")?.amountMinor ??
+    order.depositDueMinor;
 
   return (
     <>
@@ -59,11 +66,16 @@ export default async function AdminOrderPage({
             </h2>
             <ul className="border-t border-line">
               {order.items.map((item) => (
-                <li key={item.id} className="flex gap-4 py-5 border-b border-line">
+                <li
+                  key={item.id}
+                  className="flex gap-4 py-5 border-b border-line"
+                >
                   <div className="w-16 aspect-[4/5] bg-bone-deep shrink-0 overflow-hidden">
                     {item.imageUrlSnapshot && (
                       <img
-                        src={item.imageUrlSnapshot}
+                        src={cloudinaryUrl(item.imageUrlSnapshot, {
+                          width: 128,
+                        })}
                         alt=""
                         className="h-full w-full object-cover"
                       />
@@ -72,6 +84,8 @@ export default async function AdminOrderPage({
                   <div className="flex-1 flex justify-between gap-4">
                     <div>
                       <p className="text-sm">{item.nameSnapshot}</p>
+                      {/* The inputs, not just the answer — so any line can be
+                          recomputed and explained months later. */}
                       <p className="text-xs text-ink-soft mt-1">
                         {item.sizeSnapshot && `Size ${item.sizeSnapshot} · `}
                         {(item.weightMgSnapshot / 1000).toFixed(1)}g ·{" "}
@@ -115,9 +129,9 @@ export default async function AdminOrderPage({
                         {e.note}
                       </span>
                     )}
-                   <span className="block text-xs text-ink-soft mt-0.5">
-  {e.actorUserId ? "Admin" : "Customer"}
-</span>
+                    <span className="block text-xs text-ink-soft mt-0.5">
+                      {e.actorUserId ? "Admin" : "Customer"}
+                    </span>
                   </span>
                 </li>
               ))}
@@ -129,21 +143,54 @@ export default async function AdminOrderPage({
               <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-4">
                 PAYMENTS
               </h2>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {order.paymentProofs.map((p) => (
-                  <li
-                    key={p.id}
-                    className="border border-line p-4 flex justify-between gap-4 text-sm"
-                  >
-                    <div>
-                      <p>{formatEGP(p.amountMinor as Minor)}</p>
-                      {p.referenceNumber && (
-                        <p className="text-xs text-ink-soft mt-1 font-mono">
-                          {p.referenceNumber}
-                        </p>
+                  <li key={p.id} className="border border-line p-4">
+                    <div className="flex gap-4">
+                      {p.screenshotUrl ? (
+                        <a
+                          href={p.screenshotUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-24 shrink-0 border border-line hover:border-ink transition-colors"
+                          title="Open full size"
+                        >
+                          <img
+                            src={cloudinaryUrl(p.screenshotUrl, { width: 240 })}
+                            alt="Payment receipt"
+                            className="w-full"
+                          />
+                        </a>
+                      ) : (
+                        <div className="w-24 h-24 shrink-0 bg-bone-deep flex items-center justify-center text-[10px] tracking-[0.15em] text-ink-soft text-center px-2">
+                          NO IMAGE
+                        </div>
                       )}
+
+                      <div className="flex-1 flex justify-between gap-4">
+                        <div>
+                          <p className="text-sm">
+                            {formatEGP(p.amountMinor as Minor)}
+                          </p>
+                          {p.referenceNumber && (
+                            <p className="text-xs text-ink-soft mt-1 font-mono">
+                              {p.referenceNumber}
+                            </p>
+                          )}
+                          <p className="text-xs text-ink-soft mt-2">
+                            {p.createdAt.toLocaleString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        <span className="text-xs text-ink-soft shrink-0">
+                          {p.status}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-xs text-ink-soft">{p.status}</span>
                   </li>
                 ))}
               </ul>
@@ -211,7 +258,7 @@ export default async function AdminOrderPage({
             reference={order.reference}
             allowedNext={next}
             awaitingPayment={awaitingPayment}
-            depositDueMinor={order.depositDueMinor}
+            depositDueMinor={claimedMinor}
             labels={LABEL}
           />
         </div>

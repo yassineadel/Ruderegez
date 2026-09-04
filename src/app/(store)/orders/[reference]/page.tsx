@@ -5,6 +5,9 @@ import { findOrderByReference } from "@/modules/orders/repository";
 import { getSetting } from "@/lib/settings";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
+import { cloudinaryUrl } from "@/lib/cloudinary";
+import PaymentProof from "./payment-proof";
+
 
 export default async function OrderPage({
   params,
@@ -17,7 +20,8 @@ export default async function OrderPage({
   const order = await findOrderByReference(reference);
   if (!order) notFound();
 
-  // Only the owner or an admin may see an order.
+  // Only the owner or an admin may see an order. notFound rather than a
+  // "forbidden" page — someone guessing references learns nothing.
   const isOwner = session?.user?.id === order.userId;
   const isAdmin = session?.user?.role === "ADMIN";
   if (!isOwner && !isAdmin) notFound();
@@ -29,6 +33,7 @@ export default async function OrderPage({
   ]);
 
   const awaitingPayment = order.status === "PLACED";
+  const underReview = order.status === "PAYMENT_UNDER_REVIEW";
 
   return (
     <div className="px-6 lg:px-12 py-16 lg:py-24 max-w-3xl">
@@ -36,12 +41,18 @@ export default async function OrderPage({
         ORDER {order.reference}
       </p>
       <h1 className="font-display text-4xl font-light mb-3">
-        {awaitingPayment ? "Almost there" : "Thank you"}
+        {awaitingPayment
+          ? "Almost there"
+          : underReview
+            ? "Checking your payment"
+            : "Thank you"}
       </h1>
       <p className="text-sm text-ink-soft mb-12 leading-relaxed">
         {awaitingPayment
-          ? "Your order is reserved. Send the transfer below and we'll confirm it within a few hours."
-          : "We've received your payment and your order is being prepared."}
+          ? "Your order is reserved. Send the transfer below and upload the receipt."
+          : underReview
+            ? "We've received your receipt and are confirming it against the account."
+            : "We've received your payment and your order is being prepared."}
       </p>
 
       {awaitingPayment && (
@@ -50,7 +61,7 @@ export default async function OrderPage({
             Pay {formatEGP(order.depositDueMinor as Minor)}
           </h2>
           <p className="text-xs text-ink-soft mb-6">
-            Send this amount using either method, then send us the screenshot.
+            Send this amount using either method, then upload the screenshot.
           </p>
 
           <dl className="space-y-4 text-sm">
@@ -61,7 +72,9 @@ export default async function OrderPage({
                 </dt>
                 <dd className="font-mono">{instapay}</dd>
                 {instapayName && (
-                  <dd className="text-xs text-ink-soft mt-0.5">{instapayName}</dd>
+                  <dd className="text-xs text-ink-soft mt-0.5">
+                    {instapayName}
+                  </dd>
                 )}
               </div>
             )}
@@ -75,22 +88,56 @@ export default async function OrderPage({
             )}
             {!instapay && !vodafone && (
               <p className="text-sm text-ink-soft">
-                Payment details are being set up. We'll contact you shortly.
+                Payment details are being set up. We&apos;ll contact you
+                shortly.
               </p>
             )}
           </dl>
 
           <p className="mt-6 pt-6 border-t border-line text-xs text-ink-soft leading-relaxed">
-            Include your reference <span className="text-ink">{order.reference}</span>{" "}
-            in the transfer note if you can. Upload your screenshot below once
-            you've sent it.
+            Include your reference{" "}
+            <span className="text-ink">{order.reference}</span> in the transfer
+            note if you can.
           </p>
 
-          <div className="mt-6 border border-dashed border-line p-6 text-center">
-            <p className="text-xs text-ink-soft">
-              Screenshot upload coming next - for now, send it to us on
-              WhatsApp with your reference.
-            </p>
+          <PaymentProof reference={order.reference} />
+        </section>
+      )}
+
+      {underReview && order.paymentProofs.length > 0 && (
+        <section className="border border-line p-8 mb-12">
+          <h2 className="font-display text-2xl font-light mb-2">
+            Receipt received
+          </h2>
+          <p className="text-sm text-ink-soft leading-relaxed mb-6">
+            We usually confirm within a few hours. You&apos;ll hear from us once
+            it&apos;s done.
+          </p>
+
+          <div className="flex gap-4 items-start">
+            {order.paymentProofs[0].screenshotUrl && (
+              <img
+                src={cloudinaryUrl(order.paymentProofs[0].screenshotUrl, {
+                  width: 240,
+                })}
+                alt="Your payment receipt"
+                className="w-28 border border-line"
+              />
+            )}
+            <dl className="text-sm">
+              <dt className="text-xs text-ink-soft mb-1">Amount sent</dt>
+              <dd className="mb-3">
+                {formatEGP(order.paymentProofs[0].amountMinor as Minor)}
+              </dd>
+              {order.paymentProofs[0].referenceNumber && (
+                <>
+                  <dt className="text-xs text-ink-soft mb-1">Reference</dt>
+                  <dd className="font-mono text-xs">
+                    {order.paymentProofs[0].referenceNumber}
+                  </dd>
+                </>
+              )}
+            </dl>
           </div>
         </section>
       )}
@@ -103,7 +150,7 @@ export default async function OrderPage({
               <div className="w-20 aspect-[4/5] bg-bone-deep shrink-0 overflow-hidden">
                 {item.imageUrlSnapshot && (
                   <img
-                    src={item.imageUrlSnapshot}
+                    src={cloudinaryUrl(item.imageUrlSnapshot, { width: 160 })}
                     alt={item.nameSnapshot}
                     className="h-full w-full object-cover"
                   />
@@ -187,4 +234,4 @@ export default async function OrderPage({
       </Link>
     </div>
   );
-}   
+}
