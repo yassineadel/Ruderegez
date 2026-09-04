@@ -6,6 +6,8 @@ import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
 import type { CartLine } from "@/modules/cart/service";
 import { placeOrderAction } from "@/modules/orders/actions";
+import ConfirmModal from "./confirm-modal";
+import TermsNotice from "./terms-notice";
 
 type Method =
   | "DEPOSIT_THEN_CASH_ON_DELIVERY"
@@ -19,6 +21,8 @@ export default function CheckoutForm({
   depositPercent,
   city,
   defaultName,
+  leadTimeDays,
+  notice,
 }: {
   lines: CartLine[];
   subtotalMinor: Minor;
@@ -26,6 +30,8 @@ export default function CheckoutForm({
   depositPercent: number;
   city: string;
   defaultName: string;
+  leadTimeDays: number;
+  notice?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -36,6 +42,7 @@ export default function CheckoutForm({
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [method, setMethod] = useState<Method>("DEPOSIT_THEN_CASH_ON_DELIVERY");
+  const [modalOpen, setModalOpen] = useState(false);
 
   const total = (subtotalMinor + deliveryFeeMinor) as Minor;
   const deposit =
@@ -174,38 +181,55 @@ export default function CheckoutForm({
           {balance > 0 && (
             <div className="flex justify-between">
               <dt className="text-ink-soft">
-                {method === "DEPOSIT_THEN_PICKUP" ? "On collection" : "On delivery"}
+                {method === "DEPOSIT_THEN_PICKUP"
+                  ? "On collection"
+                  : "On delivery"}
               </dt>
               <dd>{formatEGP(balance)}</dd>
             </div>
           )}
         </dl>
 
-        {/* The handmade-variance notice. Not about the silver rate. */}
-        <div className="mt-6 pt-6 border-t border-line">
-          <p className="text-xs text-ink-soft leading-relaxed">
-            Each piece is made by hand, so the finished weight varies slightly.
-            The price above already allows for that, and it is what you pay. In
-            the rare case a piece comes out significantly heavier, we will
-            contact you and ask before charging anything extra.
-          </p>
-        </div>
+        {/* Informational only — acceptance happens in the modal. */}
+        <TermsNotice
+          depositPercent={depositPercent}
+          city={city}
+          leadTimeDays={leadTimeDays}
+          notice={notice}
+        />
 
         <button
-          onClick={handleSubmit}
-          disabled={pending || !name || !phone || !address}
-          className="mt-8 w-full bg-ink text-bone py-4 text-xs tracking-[0.2em] disabled:opacity-40 hover:opacity-90 transition-opacity"
+          onClick={() => setModalOpen(true)}
+          disabled={!name || !phone || !address}
+          className="mt-6 w-full bg-ink text-bone py-4 text-xs tracking-[0.2em] disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
-          {pending ? "PLACING ORDER…" : "PLACE ORDER →"}
+          REVIEW AND PLACE ORDER →
         </button>
 
-        {error && <p className="mt-4 text-sm text-red-800">{error}</p>}
+        {/* Hidden while the modal is open — it shows the error itself. */}
+        {error && !modalOpen && (
+          <p className="mt-4 text-sm text-red-800">{error}</p>
+        )}
 
         <p className="mt-4 text-[11px] text-ink-soft leading-relaxed">
           Payment instructions come next. Your order is confirmed once we
           receive the transfer.
         </p>
       </div>
+
+      <ConfirmModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleSubmit}
+        pending={pending}
+        error={error}
+        totalMinor={total}
+        depositMinor={deposit}
+        depositPercent={depositPercent}
+        city={city}
+        leadTimeDays={leadTimeDays}
+        notice={notice}
+      />
     </div>
   );
 }

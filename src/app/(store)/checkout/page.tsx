@@ -8,10 +8,12 @@ export default async function CheckoutPage() {
   const session = await auth();
   if (!session?.user) redirect("/sign-in?next=/checkout");
 
-  const [cart, settings, city] = await Promise.all([
+  const [cart, settings, city, notice, leadTime] = await Promise.all([
     getCartView(),
     getPricingSettings(),
     getSetting("deliveryCityAllowed", "Cairo"),
+    getSetting("checkoutNotice"),
+    getSetting("defaultLeadTimeDays", "7"),
   ]);
 
   if (cart.lines.length === 0) redirect("/cart");
@@ -30,6 +32,8 @@ export default async function CheckoutPage() {
         depositPercent={settings.depositPercent}
         city={city}
         defaultName={session.user.name ?? ""}
+        leadTimeDays={Number(leadTime)}
+        notice={notice || undefined}
       />
     </div>
   );

@@ -2,15 +2,29 @@
 
 import { useState, useTransition } from "react";
 import { updateSettingsAction } from "@/modules/admin/actions";
-import { SETTING_GROUPS, type SettingField } from "@/modules/admin/settings-fields";
+import {
+  SETTING_GROUPS,
+  type SettingField,
+} from "@/modules/admin/settings-fields";
 
-export default function SettingsForm({ initial }: { initial: Record<string, string> }) {
+export default function SettingsForm({
+  initial,
+  only,
+}: {
+  initial: Record<string, string>;
+  only?:string;
+}) {
   const [values, setValues] = useState(initial);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
 
+  // Compared against `initial` rather than tracked with a flag, so undoing an
+  // edit by hand correctly returns the form to "no changes".
   const dirty = Object.keys(values).some((k) => values[k] !== initial[k]);
+  const groups = only
+    ? SETTING_GROUPS.filter((g) => g.title === only)
+    : SETTING_GROUPS.filter((g) => g.title !== "Policies");
 
   function set(key: string, value: string) {
     setValues((v) => ({ ...v, [key]: value }));
@@ -27,7 +41,11 @@ export default function SettingsForm({ initial }: { initial: Record<string, stri
         return;
       }
       const n = result.data?.changed ?? 0;
-      setSaved(n === 0 ? "No changes to save." : `Saved ${n} change${n === 1 ? "" : "s"}.`);
+      setSaved(
+        n === 0
+          ? "No changes to save."
+          : `Saved ${n} change${n === 1 ? "" : "s"}.`,
+      );
       if (n > 0) window.location.reload();
     });
   }
@@ -38,9 +56,11 @@ export default function SettingsForm({ initial }: { initial: Record<string, stri
 
   return (
     <div className="max-w-2xl pb-32">
-      {SETTING_GROUPS.map((group) => (
+      {groups.map((group) => (
         <section key={group.title} className="mb-12">
-          <h2 className="font-display text-2xl font-light mb-1">{group.title}</h2>
+          <h2 className="font-display text-2xl font-light mb-1">
+            {group.title}
+          </h2>
           <p className="text-sm text-ink-soft mb-6">{group.description}</p>
 
           <div className="space-y-6">
@@ -57,6 +77,8 @@ export default function SettingsForm({ initial }: { initial: Record<string, stri
         </section>
       ))}
 
+      {/* Sticky — the form is long enough that a button at the bottom would be
+          invisible while editing the fields at the top. */}
       <div className="fixed bottom-0 left-0 right-0 lg:left-[240px] border-t border-line bg-bone px-6 py-4 lg:px-12">
         <div className="max-w-2xl flex items-center gap-4">
           <button
@@ -67,7 +89,9 @@ export default function SettingsForm({ initial }: { initial: Record<string, stri
             {pending ? "SAVING…" : "SAVE CHANGES"}
           </button>
 
-          {dirty && !pending && <span className="text-sm text-ink-soft">Unsaved changes</span>}
+          {dirty && !pending && (
+            <span className="text-sm text-ink-soft">Unsaved changes</span>
+          )}
           {saved && <span className="text-sm text-ink-soft">{saved}</span>}
           {error && <span className="text-sm text-red-800">{error}</span>}
         </div>
@@ -94,13 +118,33 @@ function Field({
       </span>
 
       {field.kind === "select" ? (
-        <select className={className} value={value} onChange={(e) => onChange(e.target.value)}>
+        <select
+          className={className}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
           {field.options?.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
         </select>
+      ) : field.kind === "textarea" ? (
+        <>
+          {/* Monospace so stray spacing and blank lines are visible while
+              editing a long document. */}
+          <textarea
+            className={
+              className + " min-h-56 resize-y font-mono text-xs leading-relaxed"
+            }
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Leave a blank line between paragraphs."
+          />
+          <span className="block text-xs text-ink-soft mt-1 text-right">
+            {value.trim() ? `${value.trim().length} characters` : "Empty"}
+          </span>
+        </>
       ) : (
         <div className="relative">
           <input
@@ -125,7 +169,9 @@ function Field({
         </div>
       )}
 
-      {field.help && <span className="block text-xs text-ink-soft mt-2">{field.help}</span>}
+      {field.help && (
+        <span className="block text-xs text-ink-soft mt-2">{field.help}</span>
+      )}
     </label>
   );
-}
+} 

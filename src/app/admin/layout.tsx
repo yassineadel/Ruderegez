@@ -29,6 +29,7 @@ export default async function AdminLayout({
           <NavLink href="/admin/orders">Orders</NavLink>
           <NavLink href="/admin/products">Products</NavLink>
           <NavLink href="/admin/categories">Categories</NavLink>
+          <NavLink href="/admin/policies">Policies</NavLink>
           <NavLink href="/admin/settings">Settings</NavLink>
         </nav>
 

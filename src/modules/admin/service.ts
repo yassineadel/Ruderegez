@@ -17,7 +17,7 @@ export function toFormValue(field: SettingField, stored: string): string {
 function toStoredValue(field: SettingField, submitted: string): string {
   const raw = submitted.trim();
 
-  if (field.kind === "text") {
+  if (field.kind === "text" || field.kind === "textarea") {
     if (!raw && !field.allowEmpty) throw new Error("REQUIRED_FIELD");
     return raw;
   }
