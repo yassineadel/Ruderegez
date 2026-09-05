@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
@@ -18,9 +18,17 @@ export default function SiteHeader({
   isSignedIn: boolean;
   isAdmin: boolean;
   cartCount: number;
-onSignOut: () => Promise<void>;
-}) {        
+  onSignOut: () => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
+
+  // Stops the page scrolling behind the open drawer.
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const links = [
     { href: "/products", label: "ALL" },
@@ -29,83 +37,93 @@ onSignOut: () => Promise<void>;
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-bone/95 backdrop-blur border-b border-line">
-      <div className="px-6 lg:px-12 h-16 lg:h-20 flex items-center justify-between">
-        {/* Left - desktop nav, mobile menu button */}
-        <nav className="hidden lg:flex items-center gap-8 text-[11px] tracking-[0.2em] flex-1">
-          {links.map((l) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              className="text-ink-soft hover:text-ink transition-colors"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-
-        <button
-          onClick={() => setOpen(true)}
-          className="lg:hidden text-ink"
-          aria-label="Open menu"
-        >
-          <Menu size={20} />
-        </button>
-
-        {/* Centre - wordmark */}
-        <Link
-          href="/"
-          className="font-display text-lg lg:text-xl tracking-[0.35em] lg:flex-1 lg:text-center"
-        >
-          RUDEREGEZ
-        </Link>
-
-        {/* Right - account and bag */}
-        <div className="flex items-center gap-5 lg:gap-7 text-[11px] tracking-[0.2em] lg:flex-1 lg:justify-end">
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
-            >
-              ADMIN
-            </Link>
-          )}
-                    {isSignedIn ? (
-            <>
+    <>
+      <header className="sticky top-0 z-50 bg-bone/95 backdrop-blur border-b border-line">
+        <div className="px-6 lg:px-12 h-16 lg:h-20 flex items-center justify-between">
+          {/* Left - desktop nav, mobile menu button */}
+          <nav className="hidden lg:flex items-center gap-8 text-[11px] tracking-[0.2em] flex-1">
+            {links.map((l) => (
               <Link
-                href="/account"
+                key={l.label}
+                href={l.href}
+                className="text-ink-soft hover:text-ink transition-colors"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+
+          <button
+            onClick={() => setOpen(true)}
+            className="lg:hidden text-ink"
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
+
+          {/* Centre - wordmark */}
+          <Link
+            href="/"
+            className="font-display text-lg lg:text-xl tracking-[0.35em] lg:flex-1 lg:text-center"
+          >
+            RUDEREGEZ
+          </Link>
+
+          {/* Right - account and bag */}
+          <div className="flex items-center gap-5 lg:gap-7 text-[11px] tracking-[0.2em] lg:flex-1 lg:justify-end">
+            {isAdmin && (
+              <Link
+                href="/admin"
                 className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
               >
-                ACCOUNT
+                ADMIN
               </Link>
-              <form action={onSignOut} className="hidden lg:block">
-                <button
-                  type="submit"
-                  className="text-ink-soft hover:text-ink transition-colors tracking-[0.2em]"
+            )}
+            {isSignedIn ? (
+              <>
+                <Link
+                  href="/account"
+                  className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
                 >
-                  SIGN OUT
-                </button>
-              </form>
-            </>
-          ) : (
-            <Link
-              href="/sign-in"
-              className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
-            >
-              SIGN IN
+                  ACCOUNT
+                </Link>
+                <form action={onSignOut} className="hidden lg:block">
+                  <button
+                    type="submit"
+                    className="text-ink-soft hover:text-ink transition-colors tracking-[0.2em]"
+                  >
+                    SIGN OUT
+                  </button>
+                </form>
+              </>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
+              >
+                SIGN IN
+              </Link>
+            )}
+            <Link href="/cart" className="hover:text-ink transition-colors">
+              BAG{cartCount > 0 && ` (${cartCount})`}
             </Link>
-          )}
-          <Link href="/cart" className="hover:text-ink transition-colors">
-            BAG{cartCount > 0 && ` (${cartCount})`}
-          </Link>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile drawer */}
+      {/* ------------------------------------------------------------------ */}
+      {/*  Mobile drawer — deliberately OUTSIDE <header>.                     */}
+      {/*                                                                     */}
+      {/*  backdrop-blur on the header makes it a containing block, so a      */}
+      {/*  position:fixed child sizes itself against the header instead of    */}
+      {/*  the viewport. As a sibling, inset-0 means the whole screen again.  */}
+      {/* ------------------------------------------------------------------ */}
       {open && (
-        <div className="fixed inset-0 z-50 bg-bone lg:hidden">
+        <div className="fixed inset-0 z-[60] bg-bone lg:hidden">
           <div className="px-6 h-16 flex items-center justify-between border-b border-line">
-            <span className="font-display text-lg tracking-[0.35em]">RUDEREGEZ</span>
+            <span className="font-display text-lg tracking-[0.35em]">
+              RUDEREGEZ
+            </span>
             <button onClick={() => setOpen(false)} aria-label="Close menu">
               <X size={20} />
             </button>
@@ -121,7 +139,7 @@ onSignOut: () => Promise<void>;
               <Link href="/cart" onClick={() => setOpen(false)}>
                 BAG{cartCount > 0 && ` (${cartCount})`}
               </Link>
-                            {isSignedIn ? (
+              {isSignedIn ? (
                 <>
                   <Link href="/account" onClick={() => setOpen(false)}>
                     ACCOUNT
@@ -146,6 +164,6 @@ onSignOut: () => Promise<void>;
           </nav>
         </div>
       )}
-    </header>
+    </>
   );
 }
