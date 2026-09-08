@@ -377,6 +377,9 @@ model CustomRequest {
 
   description String @db.Text
 
+   requestedSize     String?
+  requestedWeightMg Int?
+
   // --- ADMIN RESPONSE (FR-72) ---------------------------------------------
   /// Set by the admin after review. Null until quoted.
   quotedWeightMg    Int?
