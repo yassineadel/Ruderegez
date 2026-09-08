@@ -34,6 +34,7 @@ export default function SiteHeader({
     { href: "/products", label: "ALL" },
     { href: "/products?audience=WOMEN", label: "WOMEN" },
     { href: "/products?audience=MEN", label: "MEN" },
+        { href: "/custom", label: "CUSTOM" },
   ];
 
   return (
