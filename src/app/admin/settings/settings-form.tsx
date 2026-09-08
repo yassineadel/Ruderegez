@@ -77,7 +77,7 @@ export default function SettingsForm({
         </section>
       ))}
 
-      {/* Sticky — the form is long enough that a button at the bottom would be
+      {/* Sticky - the form is long enough that a button at the bottom would be
           invisible while editing the fields at the top. */}
       <div className="fixed bottom-0 left-0 right-0 lg:left-[240px] border-t border-line bg-bone px-6 py-4 lg:px-12">
         <div className="max-w-2xl flex items-center gap-4">

@@ -18,7 +18,7 @@ export default async function PoliciesPage() {
       <h1 className="font-display text-4xl font-light mb-2">Policies</h1>
       <p className="text-sm text-ink-soft mb-10 max-w-2xl">
         These appear on the policy pages and are linked from checkout. Write
-        them in plain text — leave a blank line between paragraphs.
+        them in plain text - leave a blank line between paragraphs.
       </p>
 
       <SettingsForm initial={initial} only={GROUP} />

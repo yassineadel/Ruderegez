@@ -34,7 +34,7 @@ export default function ConfirmModal({
 }) {
   const [accepted, setAccepted] = useState(false);
 
-  // Reset each time it opens — if they closed it, changed the address and
+  // Reset each time it opens - if they closed it, changed the address and
   // reopened, they should be confirming against what they are buying now.
   useEffect(() => {
     if (open) setAccepted(false);

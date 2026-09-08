@@ -1,13 +1,13 @@
 const DEFAULT_NOTICE = `Made to order. Work begins once your payment clears. Allow around {days} days.
 The {deposit}% deposit is not refundable once production has started, because the piece is made for you specifically.
-Weight varies slightly. Each piece is made by hand. The price already allows for this — if a piece comes out significantly heavier, we contact you before charging anything extra.
+Weight varies slightly. Each piece is made by hand. The price already allows for this - if a piece comes out significantly heavier, we contact you before charging anything extra.
 Delivery within {city} only at the moment.`;
 
 /**
  * Substitutes the live settings values into the admin's text.
  *
  * The wording is entirely his; the numbers are not. Typing "50%" by hand would
- * be wrong the day the deposit changes — {deposit} never is.
+ * be wrong the day the deposit changes - {deposit} never is.
  */
 export function renderNotice(
   template: string,

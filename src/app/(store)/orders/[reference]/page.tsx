@@ -21,7 +21,7 @@ export default async function OrderPage({
   if (!order) notFound();
 
   // Only the owner or an admin may see an order. notFound rather than a
-  // "forbidden" page — someone guessing references learns nothing.
+  // "forbidden" page - someone guessing references learns nothing.
   const isOwner = session?.user?.id === order.userId;
   const isAdmin = session?.user?.role === "ADMIN";
   if (!isOwner && !isAdmin) notFound();

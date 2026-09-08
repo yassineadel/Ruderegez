@@ -31,7 +31,7 @@ export default async function AdminOrderPage({
     order.status === "PLACED" || order.status === "PAYMENT_UNDER_REVIEW";
 
   // If the customer uploaded proof, default the confirm box to what they say
-  // they sent — he is verifying their claim, not typing a fresh number.
+  // they sent - he is verifying their claim, not typing a fresh number.
   const claimedMinor =
     order.paymentProofs.find((p) => p.status === "PENDING")?.amountMinor ??
     order.depositDueMinor;
@@ -84,7 +84,7 @@ export default async function AdminOrderPage({
                   <div className="flex-1 flex justify-between gap-4">
                     <div>
                       <p className="text-sm">{item.nameSnapshot}</p>
-                      {/* The inputs, not just the answer — so any line can be
+                      {/* The inputs, not just the answer - so any line can be
                           recomputed and explained months later. */}
                       <p className="text-xs text-ink-soft mt-1">
                         {item.sizeSnapshot && `Size ${item.sizeSnapshot} · `}

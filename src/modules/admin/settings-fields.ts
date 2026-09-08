@@ -39,14 +39,14 @@ export const SETTING_GROUPS: SettingGroup[] = [
       },
       {
         key: "depositPercent",
-        label: "Deposit — standard orders",
+        label: "Deposit - standard orders",
         kind: "percent",
         min: 0,
         max: 100,
       },
       {
         key: "depositPercentCustom",
-        label: "Deposit — custom orders",
+        label: "Deposit - custom orders",
         kind: "percent",
         min: 0,
         max: 100,
@@ -132,7 +132,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
       },
       {
         key: "quoteSlaDaysMin",
-        label: "Quote turnaround — fastest",
+        label: "Quote turnaround - fastest",
         kind: "int",
         help: "Days. Shown as a range on submission.",
         min: 0,
@@ -140,7 +140,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
       },
       {
         key: "quoteSlaDaysMax",
-        label: "Quote turnaround — slowest",
+        label: "Quote turnaround - slowest",
         kind: "int",
         help: "Days. Must not be less than the fastest.",
         min: 0,
@@ -197,7 +197,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
   {
     title: "Policies",
     description:
-      "Shown on the policy pages and summarised at checkout. Plain text — a blank line starts a new paragraph.",
+      "Shown on the policy pages and summarised at checkout. Plain text - a blank line starts a new paragraph.",
     fields: [
       {
         key: "policyTerms",
@@ -221,7 +221,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
         key: "checkoutNotice",
         label: "Checkout notice",
         kind: "textarea",
-        help: "Shown at checkout and in the confirmation box. One point per line. Use {deposit}, {city} and {days} and the current values are filled in automatically — that way they never go stale when you change the settings.",
+        help: "Shown at checkout and in the confirmation box. One point per line. Use {deposit}, {city} and {days} and the current values are filled in automatically - that way they never go stale when you change the settings.",
         allowEmpty: true,
       },
     ],

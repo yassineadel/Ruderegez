@@ -190,7 +190,7 @@ export default function CheckoutForm({
           )}
         </dl>
 
-        {/* Informational only — acceptance happens in the modal. */}
+        {/* Informational only - acceptance happens in the modal. */}
         <TermsNotice
           depositPercent={depositPercent}
           city={city}
@@ -206,7 +206,7 @@ export default function CheckoutForm({
           REVIEW AND PLACE ORDER →
         </button>
 
-        {/* Hidden while the modal is open — it shows the error itself. */}
+        {/* Hidden while the modal is open - it shows the error itself. */}
         {error && !modalOpen && (
           <p className="mt-4 text-sm text-red-800">{error}</p>
         )}

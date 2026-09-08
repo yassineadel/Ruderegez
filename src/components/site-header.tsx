@@ -112,7 +112,7 @@ export default function SiteHeader({
       </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/*  Mobile drawer — deliberately OUTSIDE <header>.                     */}
+      {/*  Mobile drawer - deliberately OUTSIDE <header>.                     */}
       {/*                                                                     */}
       {/*  backdrop-blur on the header makes it a containing block, so a      */}
       {/*  position:fixed child sizes itself against the header instead of    */}
