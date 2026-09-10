@@ -6,6 +6,7 @@ export type CartWithItems = Prisma.CartGetPayload<{
     items: {
       include: {
         product: { include: { images: true; type: true; sizes: true } };
+        customRequest: { include: { images: true } };
       };
     };
   };
@@ -23,6 +24,9 @@ export function findCartWithItems(cartId: string): Promise<CartWithItems | null>
               type: true,
               sizes: true,
             },
+          },
+          customRequest: {
+            include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
           },
         },
         orderBy: { createdAt: "asc" },

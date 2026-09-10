@@ -33,93 +33,117 @@ export default function CartLines({ lines }: { lines: CartLine[] }) {
       {error && <p className="mb-6 text-sm text-red-800">{error}</p>}
 
       <ul className={pending ? "opacity-60 transition-opacity" : ""}>
-        {lines.map((line) => (
-          <li
-            key={line.id}
-            className="flex gap-5 py-8 border-b border-line first:pt-0"
-          >
-            <Link
-              href={`/products/${line.slug}`}
-              className="w-24 sm:w-32 aspect-[4/5] bg-bone-deep shrink-0 overflow-hidden"
+        {lines.map((line) => {
+          // A custom line's slug is "custom/CR-xxxx" — a route in its own
+          // right, not a product. /products/custom/CR-xxxx would 404.
+          const href = line.isCustom
+            ? `/${line.slug}`
+            : `/products/${line.slug}`;
+
+          return (
+            <li
+              key={line.id}
+              className="flex gap-5 py-8 border-b border-line first:pt-0"
             >
-              {line.imageUrl && (
-                <img
-                  src={cloudinaryUrl(line.imageUrl, { width: 300 })}
-                  alt={line.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </Link>
+              <Link
+                href={href}
+                className="w-24 sm:w-32 aspect-[4/5] bg-bone-deep shrink-0 overflow-hidden"
+              >
+                {line.imageUrl && (
+                  <img
+                    src={cloudinaryUrl(line.imageUrl, { width: 300 })}
+                    alt={line.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </Link>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between gap-4">
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-ink-soft mb-1">
-                    {line.typeName.toUpperCase()}
-                  </p>
-                  <Link href={`/products/${line.slug}`} className="text-sm">
-                    {line.name}
-                  </Link>
-                  {line.size && (
-                    <p className="text-xs text-ink-soft mt-1">
-                      Size {line.size}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] tracking-[0.2em] text-ink-soft mb-1">
+                      {line.typeName.toUpperCase()}
                     </p>
-                  )}
-                </div>
+                    <Link href={href} className="text-sm">
+                      {line.name}
+                    </Link>
+                    {line.size && (
+                      <p className="text-xs text-ink-soft mt-1">
+                        Size {line.size}
+                      </p>
+                    )}
+                  </div>
 
-                <button
-                  onClick={() => remove(line.id)}
-                  disabled={pending}
-                  className="text-ink-soft hover:text-ink transition-colors shrink-0"
-                  aria-label="Remove"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="flex items-end justify-between mt-5">
-                <div className="flex items-center border border-line">
                   <button
-                    onClick={() => change(line.id, line.quantity - 1)}
+                    onClick={() => remove(line.id)}
                     disabled={pending}
-                    className="px-3 py-2 hover:bg-bone-deep transition-colors disabled:opacity-40"
-                    aria-label="Decrease"
+                    className="text-ink-soft hover:text-ink transition-colors shrink-0"
+                    aria-label="Remove"
                   >
-                    <Minus size={14} />
-                  </button>
-                  <span className="px-4 text-sm tabular-nums">
-                    {line.quantity}
-                  </span>
-                  <button
-                    onClick={() => change(line.id, line.quantity + 1)}
-                    disabled={pending || line.quantity >= 20}
-                    className="px-3 py-2 hover:bg-bone-deep transition-colors disabled:opacity-40"
-                    aria-label="Increase"
-                  >
-                    <Plus size={14} />
+                    <X size={16} />
                   </button>
                 </div>
 
-                <div className="text-right">
-                  <p className="text-sm">{formatEGP(line.lineTotalMinor)}</p>
-                  {line.quantity > 1 && (
-                    <p className="text-xs text-ink-soft mt-0.5">
-                      {formatEGP(line.unitPriceMinor)} each
-                    </p>
+                <div className="flex items-end justify-between mt-5">
+                  {/* One accepted quote is one piece — there is nothing to
+                      increment, so the control is replaced rather than
+                      disabled. */}
+                  {line.isCustom ? (
+                    <span className="text-xs text-ink-soft">
+                      Made to order · one piece
+                    </span>
+                  ) : (
+                    <div className="flex items-center border border-line">
+                      <button
+                        onClick={() => change(line.id, line.quantity - 1)}
+                        disabled={pending}
+                        className="px-3 py-2 hover:bg-bone-deep transition-colors disabled:opacity-40"
+                        aria-label="Decrease"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="px-4 text-sm tabular-nums">
+                        {line.quantity}
+                      </span>
+                      <button
+                        onClick={() => change(line.id, line.quantity + 1)}
+                        disabled={pending || line.quantity >= 20}
+                        className="px-3 py-2 hover:bg-bone-deep transition-colors disabled:opacity-40"
+                        aria-label="Increase"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                   )}
-                </div>
-              </div>
 
-              {line.priceChanged && (
-                <p className="mt-3 text-xs text-ink-soft">
-                  The silver rate has moved since you added this. The price
-                  above is current.
-                </p>
-              )}
-            </div>
-          </li>
-        ))}
+                  <div className="text-right">
+                    <p className="text-sm">{formatEGP(line.lineTotalMinor)}</p>
+                    {line.quantity > 1 && (
+                      <p className="text-xs text-ink-soft mt-0.5">
+                        {formatEGP(line.unitPriceMinor)} each
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Only catalog prices move. A quote is fixed by definition. */}
+                {line.priceChanged && (
+                  <p className="mt-3 text-xs text-ink-soft">
+                    The silver rate has moved since you added this. The price
+                    above is current.
+                  </p>
+                )}
+
+                {line.isCustom && (
+                  <p className="mt-3 text-xs text-ink-soft">
+                    Quoted price — this will not change.
+                  </p>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

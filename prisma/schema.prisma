@@ -398,8 +398,10 @@ model CustomRequest {
   /// a cart line, then an order.
   respondedAt DateTime?
 
-  images CustomRequestImage[]
-  user   User                 @relation(fields: [userId], references: [id])
+  images     CustomRequestImage[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  user       User                 @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -478,8 +480,9 @@ model CartItem {
   /// says the customer is shown a notice at checkout if it has moved.
   unitPriceMinor Int
 
-  cart    Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id])
+  cart          Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product       Product?       @relation(fields: [productId], references: [id])
+  customRequest CustomRequest? @relation(fields: [customRequestId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -596,8 +599,9 @@ model OrderItem {
   unitPriceMinor Int
   lineTotalMinor Int
 
-  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id])
+   order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product?       @relation(fields: [productId], references: [id])
+  customRequest CustomRequest? @relation(fields: [customRequestId], references: [id])
 
   createdAt DateTime @default(now())
 

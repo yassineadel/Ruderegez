@@ -24,6 +24,8 @@ export interface CartLine {
   unitPriceMinor: Minor;
   lineTotalMinor: Minor;
   priceChanged: boolean;
+  /** True for an accepted quote — no product, price frozen, quantity fixed. */
+  isCustom: boolean;
 }
 
 export interface CartView {
@@ -52,7 +54,29 @@ export async function getCartView(): Promise<CartView> {
 
   const lines: CartLine[] = [];
 
-  for (const item of full.items) {
+    for (const item of full.items) {
+    // ---- accepted quote: price is FROZEN at what was quoted --------------
+    if (item.kind === "CUSTOM_QUOTE" && item.customRequest) {
+      const cr = item.customRequest;
+      lines.push({
+        isCustom: true,
+        id: item.id,
+        productId: "",
+        slug: `custom/${cr.reference}`,
+        name: `Custom piece — ${cr.reference}`,
+        typeName: "MADE TO ORDER",
+        imageUrl: cr.images[0]?.url ?? null,
+        size: cr.requestedSize ?? "",
+        quantity: item.quantity,
+        unitPriceMinor: item.unitPriceMinor as Minor,
+        lineTotalMinor: (item.unitPriceMinor * item.quantity) as Minor,
+        // A quoted price never "changes" — that is the point of quoting.
+        priceChanged: false,
+      });
+      continue;
+    }
+
+    // ---- catalog item: recompute from the live rate ----------------------
     if (!item.product) continue;
 
     const size = item.size
@@ -62,6 +86,7 @@ export async function getCartView(): Promise<CartView> {
     const live = priceProduct(item.product, settings, size);
 
     lines.push({
+           isCustom: false,
       id: item.id,
       productId: item.product.id,
       slug: item.product.slug,

@@ -13,11 +13,13 @@ export default function SiteHeader({
   isSignedIn,
   isAdmin,
   cartCount,
+  awaitingCount,
   onSignOut,
 }: {
   isSignedIn: boolean;
   isAdmin: boolean;
   cartCount: number;
+  awaitingCount: number;
   onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -82,11 +84,14 @@ export default function SiteHeader({
             )}
             {isSignedIn ? (
               <>
-                <Link
+                                <Link
                   href="/account"
                   className="hidden lg:block text-ink-soft hover:text-ink transition-colors"
                 >
                   ACCOUNT
+                  {awaitingCount > 0 && (
+                    <span className="text-ink"> ({awaitingCount})</span>
+                  )}
                 </Link>
                 <form action={onSignOut} className="hidden lg:block">
                   <button
@@ -142,8 +147,11 @@ export default function SiteHeader({
               </Link>
               {isSignedIn ? (
                 <>
-                  <Link href="/account" onClick={() => setOpen(false)}>
+                                    <Link href="/account" onClick={() => setOpen(false)}>
                     ACCOUNT
+                    {awaitingCount > 0 && (
+                      <span className="text-ink"> ({awaitingCount})</span>
+                    )}
                   </Link>
                   <form action={onSignOut}>
                     <button type="submit" className="tracking-[0.2em]">

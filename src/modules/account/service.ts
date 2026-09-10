@@ -2,6 +2,21 @@ import { requireUser } from "@/lib/auth-guards";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { findOrdersForUser } from "@/modules/orders/repository";
 import { updateProfile, updatePassword } from "./repository";
+import { findRequestsForUser } from "@/modules/custom/repository";
+import { prisma } from "@/lib/db";
+
+export async function getMyCustomRequests() {
+  const user = await requireUser();
+  return findRequestsForUser(user.id);
+}
+
+/** How many things are waiting on the customer — quotes they haven't answered. */
+export async function countAwaitingResponse(): Promise<number> {
+  const user = await requireUser();
+  return prisma.customRequest.count({
+    where: { userId: user.id, status: "QUOTED" },
+  });
+}
 
 export async function getMyOrders() {
   const user = await requireUser();

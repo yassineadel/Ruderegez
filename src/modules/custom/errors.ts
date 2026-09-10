@@ -6,6 +6,9 @@ export const CUSTOM_ERRORS = {
   INVALID_UPLOAD: "INVALID_UPLOAD",
   INVALID_WEIGHT: "INVALID_WEIGHT",
   REFERENCE_COLLISION: "REFERENCE_COLLISION",
+  REQUEST_NOT_FOUND: "We couldn't find that request.",
+  NOT_QUOTED: "That quote isn't open any more.",
+  ALREADY_IN_CART: "That piece is already in your bag.",
 } as const;
 
 const MESSAGES: Record<string, string> = {

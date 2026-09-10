@@ -74,19 +74,71 @@ export async function placeOrder(input: PlaceOrderInput) {
   const balanceDueMinor = totalMinor - depositDueMinor;
 
   // --- snapshot every line -------------------------------------------------
-  const products = await prisma.product.findMany({
-    where: { id: { in: cart.lines.map((l) => l.productId) } },
-    include: { sizes: true },
-  });
+  // Two kinds of line, snapshotted from two different places. A catalog line
+  // copies its product; a custom line copies the quote it was accepted from,
+  // because there is no product behind it.
+
+  const catalogLines = cart.lines.filter((l) => !l.isCustom);
+  const customLines = cart.lines.filter((l) => l.isCustom);
+
+  const [products, customRequests] = await Promise.all([
+    catalogLines.length
+      ? prisma.product.findMany({
+          where: { id: { in: catalogLines.map((l) => l.productId) } },
+          include: { sizes: true },
+        })
+      : Promise.resolve([]),
+    customLines.length
+      ? prisma.customRequest.findMany({
+          where: {
+            reference: {
+              in: customLines.map((l) => l.slug.replace("custom/", "")),
+            },
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
   const byId = new Map(products.map((p) => [p.id, p]));
+  const crByRef = new Map(customRequests.map((c) => [c.reference, c]));
 
   const items = cart.lines.map((line) => {
+    // ---- accepted quote ---------------------------------------------------
+    if (line.isCustom) {
+      const cr = crByRef.get(line.slug.replace("custom/", ""));
+
+      return {
+        kind: "CUSTOM_QUOTE" as const,
+        productId: null,
+        customRequestId: cr?.id ?? null,
+
+        nameSnapshot: line.name,
+        imageUrlSnapshot: line.imageUrl,
+        sizeSnapshot: line.size || null,
+
+        // The quote's own weight. factorBp is 0 because there was no factor —
+        // this piece was priced by hand, not by formula, and zero says that
+        // rather than pretending otherwise.
+        weightMgSnapshot: cr?.quotedWeightMg ?? 0,
+        factorBpSnapshot: 0,
+        silverRateMinorSnapshot: settings.silverRatePerGram,
+
+        engravingFeeMinor: 0,
+
+        quantity: line.quantity,
+        unitPriceMinor: line.unitPriceMinor,
+        lineTotalMinor: line.lineTotalMinor,
+      };
+    }
+
+    // ---- catalog item -----------------------------------------------------
     const product = byId.get(line.productId);
     const size = product?.sizes.find((s) => s.label === line.size);
 
     return {
       kind: "CATALOG" as const,
       productId: line.productId,
+      customRequestId: null,
 
       nameSnapshot: line.name,
       imageUrlSnapshot: line.imageUrl,

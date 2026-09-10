@@ -4,6 +4,9 @@ import { auth } from "@/lib/auth";
 import { getRequest } from "@/modules/custom/service";
 import { getSetting } from "@/lib/settings";
 import { cloudinaryUrl } from "@/lib/cloudinary";
+import { formatEGP } from "@/lib/money";
+import type { Minor } from "@/lib/money";
+import QuoteResponse from "./quote-response";
 
 export default async function CustomRequestPage({
   params,
@@ -25,26 +28,111 @@ export default async function CustomRequestPage({
     getSetting("quoteSlaDaysMax", "3"),
   ]);
 
+  const waiting =
+    request.status === "SUBMITTED" || request.status === "UNDER_REVIEW";
+
+  const heading: Record<string, string> = {
+    SUBMITTED: "We've got it",
+    UNDER_REVIEW: "We're looking at it",
+    QUOTED: "Here's your quote",
+    ACCEPTED: "It's in your bag",
+    DECLINED: "Quote declined",
+    REJECTED: "We can't make this one",
+  };
+
   return (
     <div className="px-6 lg:px-12 py-16 lg:py-24 max-w-2xl">
       <p className="text-[10px] tracking-[0.3em] text-ink-soft mb-3">
         REQUEST {request.reference}
       </p>
       <h1 className="font-display text-4xl font-light mb-3">
-        We&apos;ve got it
+        {heading[request.status]}
       </h1>
-      <p className="text-sm text-ink-soft leading-relaxed mb-12">
-        We&apos;ll look at this and come back with a price within {slaMin}–
-        {slaMax} days. Nothing is charged until you accept.
-      </p>
 
+      {waiting && (
+        <p className="text-sm text-ink-soft leading-relaxed mb-12">
+          We&apos;ll come back with a price within {slaMin}–{slaMax} days.
+          Nothing is charged until you accept.
+        </p>
+      )}
+
+      {/* ---------------- the quote ---------------- */}
+      {request.status === "QUOTED" && request.quotedPriceMinor && (
+        <section className="border border-ink p-8 mb-12">
+          <p className="text-[10px] tracking-[0.2em] text-ink-soft mb-2">
+            YOUR PRICE
+          </p>
+          <p className="font-display text-4xl font-light mb-6">
+            {formatEGP(request.quotedPriceMinor as Minor)}
+          </p>
+
+          <dl className="grid sm:grid-cols-2 gap-4 text-sm border-t border-line pt-5">
+            {request.quotedWeightMg && (
+              <div>
+                <dt className="text-xs text-ink-soft mb-1">Silver weight</dt>
+                <dd>{(request.quotedWeightMg / 1000).toFixed(1)}g</dd>
+              </div>
+            )}
+            {request.quotedLeadTimeDays !== null && (
+              <div>
+                <dt className="text-xs text-ink-soft mb-1">Ready in</dt>
+                <dd>about {request.quotedLeadTimeDays} days</dd>
+              </div>
+            )}
+          </dl>
+
+          {request.quoteNote && (
+            <p className="text-sm text-ink-soft leading-relaxed mt-5 pt-5 border-t border-line whitespace-pre-line">
+              {request.quoteNote}
+            </p>
+          )}
+
+          {isOwner && <QuoteResponse reference={request.reference} />}
+        </section>
+      )}
+
+      {/* ---------------- accepted ---------------- */}
+      {request.status === "ACCEPTED" && (
+        <section className="border border-line p-8 mb-12">
+          <p className="text-sm text-ink-soft leading-relaxed mb-6">
+            This piece is in your bag at{" "}
+            {request.quotedPriceMinor
+              ? formatEGP(request.quotedPriceMinor as Minor)
+              : "the quoted price"}
+            . Work begins once your payment clears.
+          </p>
+          <Link
+            href="/cart"
+            className="inline-block bg-ink text-bone px-10 py-3.5 text-xs tracking-[0.2em] hover:opacity-90 transition-opacity"
+          >
+            GO TO YOUR BAG →
+          </Link>
+        </section>
+      )}
+
+      {/* ---------------- declined ---------------- */}
+      {request.status === "DECLINED" && (
+        <p className="text-sm text-ink-soft leading-relaxed mb-12">
+          You declined this quote. If you&apos;ve changed your mind or want
+          something adjusted, send a new request and mention this reference.
+        </p>
+      )}
+
+      {/* ---------------- rejected ---------------- */}
+      {request.status === "REJECTED" && request.rejectionReason && (
+        <section className="border border-line p-8 mb-12">
+          <p className="text-sm leading-relaxed">{request.rejectionReason}</p>
+        </section>
+      )}
+
+      {/* ---------------- what they sent ---------------- */}
       <section className="mb-10">
         <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-4">
           YOUR PHOTOS
         </h2>
         <div className="flex flex-wrap gap-3">
           {request.images.map((img) => (
-            <a
+            <Link
               key={img.id}
               href={img.url}
               target="_blank"
@@ -56,7 +144,7 @@ export default async function CustomRequestPage({
                 alt=""
                 className="h-full w-full object-cover"
               />
-            </a>
+            </Link>
           ))}
         </div>
       </section>
