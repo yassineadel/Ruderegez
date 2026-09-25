@@ -13,10 +13,13 @@ export async function placeOrderAction(input: {
   addressNotes?: string;
   paymentMethod: PaymentMethod;
   expectedTotalMinor: number;
+  paymentScreenshotUrl: string;
+  paymentReferenceNumber?: string;
 }): Promise<Result<{ reference: string }>> {
   try {
     const order = await placeOrder(input);
     revalidatePath("/cart");
+    revalidatePath("/admin/orders");
     revalidatePath("/", "layout");
     return { ok: true, data: { reference: order.reference } };
   } catch (err) {

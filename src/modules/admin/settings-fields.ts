@@ -181,6 +181,13 @@ export const SETTING_GROUPS: SettingGroup[] = [
       { key: "storePhone", label: "Phone", kind: "text", allowEmpty: true },
       { key: "storeAddress", label: "Address", kind: "text", allowEmpty: true },
       {
+        key: "storeMapLink",
+        label: "Google Maps link",
+        kind: "text",
+        allowEmpty: true,
+        help: "The share link from Google Maps (starts with https://). The address in the footer and at checkout links here.",
+      },
+      {
         key: "storeMapEmbedUrl",
         label: "Google Maps embed URL",
         kind: "text",

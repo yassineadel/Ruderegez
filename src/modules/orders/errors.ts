@@ -7,6 +7,7 @@ export const ORDER_ERRORS = {
   PRICE_MOVED: "PRICE_MOVED",
   REFERENCE_COLLISION: "REFERENCE_COLLISION",
   NOT_SIGNED_IN: "NOT_SIGNED_IN",
+  PROOF_REQUIRED: "PROOF_REQUIRED",
 } as const;
 
 const MESSAGES: Record<string, string> = {
@@ -15,6 +16,8 @@ const MESSAGES: Record<string, string> = {
   [ORDER_ERRORS.INVALID_PHONE]: "Please enter a valid Egyptian phone number.",
   [ORDER_ERRORS.INVALID_CITY]: "We only deliver within the listed city at the moment.",
   [ORDER_ERRORS.INVALID_PAYMENT_METHOD]: "Please choose how you'd like to pay.",
+  [ORDER_ERRORS.PROOF_REQUIRED]:
+    "Please upload the screenshot of your transfer before placing the order.",
   [ORDER_ERRORS.PRICE_MOVED]:
     "The silver rate changed while you were checking out. Please review the new total and confirm.",
   [ORDER_ERRORS.REFERENCE_COLLISION]: "Something went wrong placing your order. Please try again.",

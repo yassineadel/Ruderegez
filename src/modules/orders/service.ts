@@ -1,5 +1,5 @@
 import type { Minor } from "@/lib/money";
-import { getPricingSettings } from "@/lib/settings";
+import { getPricingSettings, getSetting } from "@/lib/settings";
 import { requireUser } from "@/lib/auth-guards";
 import { getCartView } from "@/modules/cart/service";
 import { findCurrentCart } from "@/modules/cart/cart-identity";
@@ -22,6 +22,8 @@ export interface PlaceOrderInput {
   paymentMethod: PaymentMethod;
   /** The total the customer was shown. If it no longer matches, we stop. */
   expectedTotalMinor: number;
+   paymentScreenshotUrl: string;
+  paymentReferenceNumber?: string;
 }
 
 /**
@@ -40,25 +42,50 @@ export interface PlaceOrderInput {
 export async function placeOrder(input: PlaceOrderInput) {
   const user = await requireUser();
 
-  const [cart, cartRow, settings] = await Promise.all([
+  const [cart, cartRow, settings, storeAddress] = await Promise.all([
     getCartView(),
     findCurrentCart(),
     getPricingSettings(),
+    getSetting("storeAddress"),
   ]);
 
   if (!cartRow || cart.lines.length === 0) throw new Error("EMPTY_CART");
 
+  // --- payment method ------------------------------------------------------
+  // Two options only: pay in full now (delivered), or pay the deposit now and
+  // the rest when collecting from the store. DEPOSIT_THEN_CASH_ON_DELIVERY
+  // stays in the enum so older orders still read correctly - it can't be
+  // chosen now.
+  const ALLOWED: PaymentMethod[] = ["FULL_INSTAPAY", "DEPOSIT_THEN_PICKUP"];
+  if (!ALLOWED.includes(input.paymentMethod)) {
+    throw new Error("INVALID_PAYMENT_METHOD");
+  }
+  const isPickup = input.paymentMethod === "DEPOSIT_THEN_PICKUP";
+
   // --- validate the customer details --------------------------------------
   if (input.customerName.trim().length < 2) throw new Error("INVALID_ADDRESS");
-  if (input.addressLine.trim().length < 6) throw new Error("INVALID_ADDRESS");
+  // A collection order has no delivery address to check.
+  if (!isPickup && input.addressLine.trim().length < 6) {
+    throw new Error("INVALID_ADDRESS");
+  }
 
   // Egyptian mobile: 01 followed by 0, 1, 2 or 5, then eight digits.
   const phone = input.customerPhone.replace(/[\s-]/g, "");
   if (!/^01[0125]\d{8}$/.test(phone)) throw new Error("INVALID_PHONE");
 
+  // --- payment receipt -------------------------------------------------------
+  // The customer pays before placing the order, so the receipt is required.
+  // It must be one of our own Cloudinary uploads - never an arbitrary URL
+  // that the admin panel would then render.
+  if (!input.paymentScreenshotUrl) throw new Error("PROOF_REQUIRED");
+  if (!input.paymentScreenshotUrl.startsWith("https://res.cloudinary.com/")) {
+    throw new Error("INVALID_UPLOAD");
+  }
+
   // --- money ---------------------------------------------------------------
   const subtotalMinor = cart.subtotalMinor;
-  const deliveryFeeMinor = settings.deliveryFee;
+  // Nothing is delivered on a collection order, so nothing is charged for it.
+  const deliveryFeeMinor = isPickup ? 0 : settings.deliveryFee;
   const totalMinor = subtotalMinor + deliveryFeeMinor;
 
   // The rate moved between render and submit.
@@ -171,13 +198,17 @@ export async function placeOrder(input: PlaceOrderInput) {
     order: {
       reference,
       user: { connect: { id: user.id } },
-      status: "PLACED",
+       status: "PAYMENT_UNDER_REVIEW",  
 
       customerName: input.customerName.trim(),
       customerPhone: phone,
-      addressLine: input.addressLine.trim(),
+      // For a collection order the "address" snapshot is where they collect
+      // from - so the order page and the admin both show the store.
+      addressLine: isPickup
+        ? `Collect from store${storeAddress ? ` - ${storeAddress}` : ""}`
+        : input.addressLine.trim(),
       addressCity: input.addressCity.trim(),
-      addressNotes: input.addressNotes?.trim() || null,
+      addressNotes: isPickup ? null : input.addressNotes?.trim() || null,
 
       silverRateMinorSnapshot: settings.silverRatePerGram,
       subtotalMinor,
@@ -190,8 +221,13 @@ export async function placeOrder(input: PlaceOrderInput) {
 
       paymentMethod: input.paymentMethod,
     },
-    items,
+        items,
     cartId: cartRow.id,
+    proof: {
+      screenshotUrl: input.paymentScreenshotUrl,
+      amountMinor: depositDueMinor,
+      referenceNumber: input.paymentReferenceNumber?.trim() || undefined,
+    },
   });
 
   return { reference: order.reference, id: order.id };

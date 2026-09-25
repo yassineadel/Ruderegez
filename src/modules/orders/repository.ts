@@ -37,16 +37,19 @@ export function referenceExists(reference: string): Promise<boolean> {
 }
 
 /**
- * Creates the order, its item snapshots, the opening status event, and empties
- * the cart - as ONE unit.
+ * Creates the order, its item snapshots, its payment receipt, the status
+ * history, and empties the cart - as ONE unit.
  *
  * A cart emptied without an order created is a customer who has paid for
- * nothing. A transaction makes that state impossible.
+ * nothing. A transaction makes that state impossible. The receipt is part of
+ * the same unit because the customer has already transferred the money: an
+ * order without its receipt would look unpaid.
  */
 export function createOrderTransaction(data: {
   order: Prisma.OrderCreateInput;
   items: Omit<Prisma.OrderItemCreateManyInput, "orderId">[];
   cartId: string;
+  proof: { screenshotUrl: string; amountMinor: number; referenceNumber?: string };
 }) {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.create({ data: data.order });
@@ -55,13 +58,37 @@ export function createOrderTransaction(data: {
       data: data.items.map((i) => ({ ...i, orderId: order.id })),
     });
 
-    await tx.orderStatusEvent.create({
+    await tx.paymentProof.create({
       data: {
         orderId: order.id,
-        fromStatus: null,
-        toStatus: "PLACED",
-        note: "Order placed by customer.",
+        status: "PENDING",
+        screenshotUrl: data.proof.screenshotUrl,
+        amountMinor: data.proof.amountMinor,
+        referenceNumber: data.proof.referenceNumber,
       },
+    });
+
+    // Two events, so the timeline still reads "placed, then receipt in" -
+    // the same history an order paid afterwards would have. The 1ms gap keeps
+    // them in that order when sorted by createdAt.
+    const now = new Date();
+    await tx.orderStatusEvent.createMany({
+      data: [
+        {
+          orderId: order.id,
+          fromStatus: null,
+          toStatus: "PLACED",
+          note: "Order placed by customer.",
+          createdAt: now,
+        },
+        {
+          orderId: order.id,
+          fromStatus: "PLACED",
+          toStatus: "PAYMENT_UNDER_REVIEW",
+          note: "Payment receipt uploaded at checkout.",
+          createdAt: new Date(now.getTime() + 1),
+        },
+      ],
     });
 
     await tx.cartItem.deleteMany({ where: { cartId: data.cartId } });

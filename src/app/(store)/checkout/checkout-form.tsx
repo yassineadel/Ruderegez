@@ -2,6 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { MapPin } from "lucide-react";
+import ImageUpload from "@/components/image-upload";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
 import type { CartLine } from "@/modules/cart/service";
@@ -9,10 +12,13 @@ import { placeOrderAction } from "@/modules/orders/actions";
 import ConfirmModal from "./confirm-modal";
 import TermsNotice from "./terms-notice";
 
-type Method =
-  | "DEPOSIT_THEN_CASH_ON_DELIVERY"
-  | "FULL_INSTAPAY"
-  | "DEPOSIT_THEN_PICKUP";
+/**
+ * Two ways to buy:
+ *   FULL_INSTAPAY        pay everything now, we deliver (delivery fee applies)
+ *   DEPOSIT_THEN_PICKUP  pay the deposit now, collect and pay the rest at the
+ *                        store (no delivery, so no delivery fee)
+ */
+type Method = "FULL_INSTAPAY" | "DEPOSIT_THEN_PICKUP";
 
 export default function CheckoutForm({
   lines,
@@ -23,6 +29,9 @@ export default function CheckoutForm({
   defaultName,
   leadTimeDays,
   notice,
+  storeAddress,
+  storeMapLink,
+  payTo,
 }: {
   lines: CartLine[];
   subtotalMinor: Minor;
@@ -32,6 +41,10 @@ export default function CheckoutForm({
   defaultName: string;
   leadTimeDays: number;
   notice?: string;
+  storeAddress: string;
+  storeMapLink: string | null;
+  /** Where the customer sends the money. Empty strings mean "not set up". */
+  payTo: { instapay: string; instapayName: string; vodafone: string };
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -41,10 +54,17 @@ export default function CheckoutForm({
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
-  const [method, setMethod] = useState<Method>("DEPOSIT_THEN_CASH_ON_DELIVERY");
+  const [method, setMethod] = useState<Method>("FULL_INSTAPAY");
   const [modalOpen, setModalOpen] = useState(false);
 
-  const total = (subtotalMinor + deliveryFeeMinor) as Minor;
+  // The transfer receipt - uploaded before the order is placed.
+  const [receiptUrl, setReceiptUrl] = useState("");
+  const [payRef, setPayRef] = useState("");
+
+  const isPickup = method === "DEPOSIT_THEN_PICKUP";
+  // Must match the server: no delivery fee on a collection order.
+  const deliveryMinor = (isPickup ? 0 : deliveryFeeMinor) as Minor;
+  const total = (subtotalMinor + deliveryMinor) as Minor;
   const deposit =
     method === "FULL_INSTAPAY"
       ? total
@@ -61,11 +81,13 @@ export default function CheckoutForm({
       const result = await placeOrderAction({
         customerName: name,
         customerPhone: phone,
-        addressLine: address,
+        addressLine: isPickup ? "" : address,
         addressCity: city,
-        addressNotes: notes || undefined,
+        addressNotes: isPickup ? undefined : notes || undefined,
         paymentMethod: method,
         expectedTotalMinor: total,
+        paymentScreenshotUrl: receiptUrl,
+        paymentReferenceNumber: payRef || undefined,
       });
 
       if (!result.ok) {
@@ -80,9 +102,31 @@ export default function CheckoutForm({
     <div className="grid lg:grid-cols-[1fr_380px] gap-12 lg:gap-20 items-start">
       {/* ---------------- left: details ---------------- */}
       <div className="max-w-lg">
-        <h2 className="font-display text-2xl font-light mb-6">Delivery</h2>
+        {/* Payment first - the choice decides whether we need an address. */}
+        <h2 className="font-display text-2xl font-light mb-6">Payment</h2>
 
-        <div className="space-y-4 mb-12">
+        <div className="space-y-3 mb-12">
+          <MethodOption
+            value="FULL_INSTAPAY"
+            selected={method}
+            onSelect={setMethod}
+            title="Pay in full now - delivered to you"
+            detail={`One transfer by InstaPay or Vodafone Cash. Delivered within ${city}.`}
+          />
+          <MethodOption
+            value="DEPOSIT_THEN_PICKUP"
+            selected={method}
+            onSelect={setMethod}
+            title={`Pay ${depositPercent}% now - collect from our store`}
+            detail="Transfer the deposit now and pay the balance when you collect the piece. No delivery fee."
+          />
+        </div>
+
+        <h2 className="font-display text-2xl font-light mb-6">
+          {isPickup ? "Collection" : "Delivery"}
+        </h2>
+
+        <div className="space-y-4">
           <input
             className={field}
             placeholder="Full name"
@@ -96,47 +140,102 @@ export default function CheckoutForm({
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
-          <textarea
-            className={field + " min-h-24 resize-y"}
-            placeholder="Street, building, floor, apartment"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-          <input className={field} value={city} disabled />
-          <p className="text-xs text-ink-soft">
-            We currently deliver within {city} only.
-          </p>
-          <textarea
-            className={field + " min-h-20 resize-y"}
-            placeholder="Delivery notes (optional) - landmarks, best time to call"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
+
+          {isPickup ? (
+            <div className="border border-line p-5 flex gap-3 items-start">
+              <MapPin size={16} className="mt-0.5 shrink-0 text-ink-soft" />
+              <div className="text-sm">
+                <p className="text-[10px] tracking-[0.2em] text-ink-soft mb-1">
+                  COLLECT FROM
+                </p>
+                <p>{storeAddress || "Our store"}</p>
+                {storeMapLink && (
+                  <Link
+                    href={storeMapLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 text-xs underline underline-offset-4 text-ink-soft hover:text-ink transition-colors"
+                  >
+                    Open in Google Maps
+                  </Link>
+                )}
+                <p className="text-xs text-ink-soft mt-3 leading-relaxed">
+                  We&apos;ll call you on this number when your piece is ready.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <textarea
+                className={field + " min-h-24 resize-y"}
+                placeholder="Street, building, floor, apartment"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+              <input className={field} value={city} disabled />
+              <p className="text-xs text-ink-soft">
+                We currently deliver within {city} only.
+              </p>
+              <textarea
+                className={field + " min-h-20 resize-y"}
+                placeholder="Delivery notes (optional) - landmarks, best time to call"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </>
+          )}
         </div>
 
-        <h2 className="font-display text-2xl font-light mb-6">Payment</h2>
+        {/* ---------------- transfer + receipt ---------------- */}
+        <h2 className="font-display text-2xl font-light mt-12 mb-2">
+          Send {formatEGP(deposit)}
+        </h2>
+        <p className="text-xs text-ink-soft mb-6 leading-relaxed">
+          Transfer the amount using either method below, then upload the
+          screenshot. We confirm it within a few hours of your order.
+        </p>
 
-        <div className="space-y-3">
-          <MethodOption
-            value="DEPOSIT_THEN_CASH_ON_DELIVERY"
-            selected={method}
-            onSelect={setMethod}
-            title={`Pay ${depositPercent}% now, rest on delivery`}
-            detail="Transfer the deposit by InstaPay or Vodafone Cash. Pay the balance in cash when it arrives."
+        <dl className="space-y-4 text-sm border border-line p-5">
+          {payTo.instapay && (
+            <div>
+              <dt className="text-[10px] tracking-[0.2em] text-ink-soft mb-1">
+                INSTAPAY
+              </dt>
+              <dd className="font-mono">{payTo.instapay}</dd>
+              {payTo.instapayName && (
+                <dd className="text-xs text-ink-soft mt-0.5">
+                  {payTo.instapayName}
+                </dd>
+              )}
+            </div>
+          )}
+          {payTo.vodafone && (
+            <div>
+              <dt className="text-[10px] tracking-[0.2em] text-ink-soft mb-1">
+                VODAFONE CASH
+              </dt>
+              <dd className="font-mono">{payTo.vodafone}</dd>
+            </div>
+          )}
+          {!payTo.instapay && !payTo.vodafone && (
+            <p className="text-sm text-ink-soft">
+              Payment details are being set up. Please contact us to order.
+            </p>
+          )}
+        </dl>
+
+        <div className="mt-5 space-y-3">
+          <ImageUpload
+            value={receiptUrl}
+            onChange={setReceiptUrl}
+            folder="payments"
+            label="Upload your transfer screenshot"
           />
-          <MethodOption
-            value="FULL_INSTAPAY"
-            selected={method}
-            onSelect={setMethod}
-            title="Pay in full now"
-            detail="One transfer, nothing to pay on delivery."
-          />
-          <MethodOption
-            value="DEPOSIT_THEN_PICKUP"
-            selected={method}
-            onSelect={setMethod}
-            title={`Pay ${depositPercent}% now, collect in person`}
-            detail="Pay the balance when you collect the piece."
+          <input
+            className={field}
+            placeholder="Transfer reference number (optional)"
+            value={payRef}
+            onChange={(e) => setPayRef(e.target.value)}
           />
         </div>
       </div>
@@ -165,7 +264,7 @@ export default function CheckoutForm({
           </div>
           <div className="flex justify-between">
             <dt className="text-ink-soft">Delivery</dt>
-            <dd>{formatEGP(deliveryFeeMinor)}</dd>
+            <dd>{isPickup ? "Collection - free" : formatEGP(deliveryMinor)}</dd>
           </div>
           <div className="flex justify-between pt-3 border-t border-line text-base">
             <dt>Total</dt>
@@ -180,11 +279,7 @@ export default function CheckoutForm({
           </div>
           {balance > 0 && (
             <div className="flex justify-between">
-              <dt className="text-ink-soft">
-                {method === "DEPOSIT_THEN_PICKUP"
-                  ? "On collection"
-                  : "On delivery"}
-              </dt>
+              <dt className="text-ink-soft">On collection</dt>
               <dd>{formatEGP(balance)}</dd>
             </div>
           )}
@@ -200,7 +295,7 @@ export default function CheckoutForm({
 
         <button
           onClick={() => setModalOpen(true)}
-          disabled={!name || !phone || !address}
+          disabled={!name || !phone || (!isPickup && !address) || !receiptUrl}
           className="mt-6 w-full bg-ink text-bone py-4 text-xs tracking-[0.2em] disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
           REVIEW AND PLACE ORDER →
@@ -212,8 +307,9 @@ export default function CheckoutForm({
         )}
 
         <p className="mt-4 text-[11px] text-ink-soft leading-relaxed">
-          Payment instructions come next. Your order is confirmed once we
-          receive the transfer.
+          {receiptUrl
+            ? "Receipt attached. We'll confirm your order once we've checked the transfer."
+            : "Upload your transfer screenshot to place the order."}
         </p>
       </div>
 

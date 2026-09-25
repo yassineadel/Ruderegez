@@ -8,12 +8,28 @@ export default async function CheckoutPage() {
   const session = await auth();
   if (!session?.user) redirect("/sign-in?next=/checkout");
 
-  const [cart, settings, city, notice, leadTime] = await Promise.all([
+  const [
+    cart,
+    settings,
+    city,
+    notice,
+    leadTime,
+    storeAddress,
+    storeMapLink,
+    instapay,
+    instapayName,
+    vodafone,
+  ] = await Promise.all([
     getCartView(),
     getPricingSettings(),
     getSetting("deliveryCityAllowed", "Cairo"),
     getSetting("checkoutNotice"),
     getSetting("defaultLeadTimeDays", "7"),
+    getSetting("storeAddress"),
+    getSetting("storeMapLink"),
+    getSetting("instapayHandle"),
+    getSetting("instapayAccountName"),
+    getSetting("vodafoneCashNumber"),
   ]);
 
   if (cart.lines.length === 0) redirect("/cart");
@@ -34,6 +50,9 @@ export default async function CheckoutPage() {
         defaultName={session.user.name ?? ""}
         leadTimeDays={Number(leadTime)}
         notice={notice || undefined}
+        storeAddress={storeAddress}
+        storeMapLink={storeMapLink.startsWith("https://") ? storeMapLink : null}
+        payTo={{ instapay, instapayName, vodafone }}
       />
     </div>
   );

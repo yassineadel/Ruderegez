@@ -6,11 +6,15 @@ import { getSetting } from "@/lib/settings";
  * the client can change the phone number in the admin panel without a deploy.
  */
 export default async function SiteFooter() {
-  const [phone, address, city] = await Promise.all([
+  const [phone, address, mapLink, city] = await Promise.all([
     getSetting("storePhone"),
     getSetting("storeAddress"),
+    getSetting("storeMapLink"),
     getSetting("deliveryCityAllowed", "Cairo"),
   ]);
+
+  // Only ever link out to an https address - the value is admin-typed text.
+  const safeMapLink = mapLink.startsWith("https://") ? mapLink : null;
 
   const year = new Date().getFullYear();
 
@@ -43,14 +47,14 @@ export default async function SiteFooter() {
           </h2>
           <ul className="space-y-2.5 text-xs">
             <li>
-              <a
+              <Link
                 href="https://www.instagram.com/ruderegez"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-ink-soft transition-colors"
               >
                 Instagram
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>
@@ -71,12 +75,27 @@ export default async function SiteFooter() {
           <ul className="space-y-2.5 text-xs text-ink-soft">
             {phone && (
               <li>
-                <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-ink transition-colors">
+                <Link href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-ink transition-colors">
                   {phone}
-                </a>
+                </Link>
               </li>
             )}
-            {address && <li>{address}</li>}
+            {address && (
+              <li>
+                {safeMapLink ? (
+                  <Link
+                    href={safeMapLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-4 hover:text-ink transition-colors"
+                  >
+                    {address}
+                  </Link>
+                ) : (
+                  address
+                )}
+              </li>
+            )}
             <li>Delivery within {city}</li>
           </ul>
         </div>
