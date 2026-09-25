@@ -19,9 +19,14 @@ export default async function AdminCategoriesPage() {
           slug: c.slug,
           isActive: c.isActive,
           productCount: c._count.products,
+          customFactor: c.customFactorBp === null ? null : c.customFactorBp / 10000,
+          sizes: c.sizes.map((s) => ({
+            id: s.id,
+            label: s.label,
+            weightG: s.weightMg / 1000,
+          })),
         }))}
       />
     </>
   );
 }
-

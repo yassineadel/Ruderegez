@@ -4,7 +4,7 @@ export const CUSTOM_ERRORS = {
   IMAGES_REQUIRED: "IMAGES_REQUIRED",
   TOO_MANY_IMAGES: "TOO_MANY_IMAGES",
   INVALID_UPLOAD: "INVALID_UPLOAD",
-  INVALID_WEIGHT: "INVALID_WEIGHT",
+  SIZE_INVALID: "SIZE_INVALID",
   REFERENCE_COLLISION: "REFERENCE_COLLISION",
   REQUEST_NOT_FOUND: "We couldn't find that request.",
   NOT_QUOTED: "That quote isn't open any more.",
@@ -18,7 +18,7 @@ const MESSAGES: Record<string, string> = {
   [CUSTOM_ERRORS.IMAGES_REQUIRED]: "Please add at least one photo.",
   [CUSTOM_ERRORS.TOO_MANY_IMAGES]: "Please add no more than six photos.",
   [CUSTOM_ERRORS.INVALID_UPLOAD]: "One of those uploads didn't work. Please try again.",
-  [CUSTOM_ERRORS.INVALID_WEIGHT]: "Please enter a weight between 0.1 and 1000 grams.",
+  [CUSTOM_ERRORS.SIZE_INVALID]: "That size isn't available any more. Please choose another.",
   [CUSTOM_ERRORS.REFERENCE_COLLISION]: "Something went wrong. Please try again.",
 };
 

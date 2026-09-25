@@ -9,6 +9,11 @@ import {
   deleteCategory,
   countProductsInCategory,
   swapSortOrder,
+  findCategoryById,
+  sizeLabelTaken,
+  nextSizeSortOrder,
+  createCategorySize,
+  deleteCategorySize,
 } from "./categories-repository";
 
 export async function listCategories() {
@@ -83,4 +88,53 @@ export async function moveCategory(id: string, direction: "up" | "down") {
     { id: all[index].id, sortOrder: all[index].sortOrder },
     { id: all[swapWith].id, sortOrder: all[swapWith].sortOrder },
   );
+}
+
+// ============================================================================
+//  SIZES + CUSTOM FACTOR  (custom request form)
+// ============================================================================
+
+/** Weight arrives in grams from the form and is stored in milligrams. */
+export async function addCategorySize(typeId: string, label: string, weightG: number) {
+  await requireAdmin();
+
+  const category = await findCategoryById(typeId);
+  if (!category) throw new Error("CATEGORY_NOT_FOUND");
+
+  const trimmed = label.trim();
+  if (trimmed.length === 0 || trimmed.length > 30) throw new Error("SIZE_LABEL_INVALID");
+  if (!Number.isFinite(weightG) || weightG < 0.1 || weightG > 1000) {
+    throw new Error("SIZE_WEIGHT_INVALID");
+  }
+  if (await sizeLabelTaken(typeId, trimmed)) throw new Error("SIZE_EXISTS");
+
+  await createCategorySize({
+    typeId,
+    label: trimmed,
+    weightMg: Math.round(weightG * 1000),
+    sortOrder: await nextSizeSortOrder(typeId),
+  });
+}
+
+export async function removeCategorySize(id: string) {
+  await requireAdmin();
+  await deleteCategorySize(id);
+}
+
+/**
+ * The admin types a multiplier - 2.5 - and it is stored as basis points,
+ * 25000, the same unit as Product.factorBp. Null clears it, which hides the
+ * estimate for new designs in that category.
+ */
+export async function setCategoryFactor(id: string, factor: number | null) {
+  await requireAdmin();
+
+  if (factor === null) {
+    await updateCategory(id, { customFactorBp: null });
+    return;
+  }
+  if (!Number.isFinite(factor) || factor < 1 || factor > 10) {
+    throw new Error("FACTOR_INVALID");
+  }
+  await updateCategory(id, { customFactorBp: Math.round(factor * 10000) });
 }

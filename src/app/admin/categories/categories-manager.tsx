@@ -2,7 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Pencil, Trash2, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Eye,
+  EyeOff,
+  Pencil,
+  Ruler,
+  Trash2,
+  X,
+} from "lucide-react";
+import CategorySizes, { type SizeRow } from "./category-sizes";
 import {
   addCategoryAction,
   renameCategoryAction,
@@ -17,6 +28,8 @@ interface Category {
   slug: string;
   isActive: boolean;
   productCount: number;
+  customFactor: number | null;
+  sizes: SizeRow[];
 }
 
 export default function CategoriesManager({
@@ -30,6 +43,7 @@ export default function CategoriesManager({
   const [newName, setNewName] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [sizesOpen, setSizesOpen] = useState<string | null>(null);
 
   const field =
     "bg-transparent border border-line px-4 py-3 text-sm " +
@@ -78,119 +92,138 @@ export default function CategoriesManager({
 
       <div className="border border-line">
         {categories.map((c, i) => (
-          <div
-            key={c.id}
-            className="flex items-center gap-3 px-4 py-3 border-b border-line last:border-0"
-          >
-            <div className="flex flex-col">
-              <button
-                onClick={() => run(() => moveCategoryAction(c.id, "up"))}
-                disabled={pending || i === 0}
-                className="text-ink-soft hover:text-ink disabled:opacity-20 transition-colors"
-                aria-label="Move up"
-              >
-                <ArrowUp size={13} />
-              </button>
-              <button
-                onClick={() => run(() => moveCategoryAction(c.id, "down"))}
-                disabled={pending || i === categories.length - 1}
-                className="text-ink-soft hover:text-ink disabled:opacity-20 transition-colors"
-                aria-label="Move down"
-              >
-                <ArrowDown size={13} />
-              </button>
-            </div>
+          <div key={c.id} className="border-b border-line last:border-0">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="flex flex-col">
+                <button
+                  onClick={() => run(() => moveCategoryAction(c.id, "up"))}
+                  disabled={pending || i === 0}
+                  className="text-ink-soft hover:text-ink disabled:opacity-20 transition-colors"
+                  aria-label="Move up"
+                >
+                  <ArrowUp size={13} />
+                </button>
+                <button
+                  onClick={() => run(() => moveCategoryAction(c.id, "down"))}
+                  disabled={pending || i === categories.length - 1}
+                  className="text-ink-soft hover:text-ink disabled:opacity-20 transition-colors"
+                  aria-label="Move down"
+                >
+                  <ArrowDown size={13} />
+                </button>
+              </div>
 
-            <div className="flex-1 min-w-0">
-              {editing === c.id ? (
-                <div className="flex gap-2">
-                  <input
-                    className={field + " flex-1 py-2"}
-                    value={editName}
-                    autoFocus
-                    onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
+              <div className="flex-1 min-w-0">
+                {editing === c.id ? (
+                  <div className="flex gap-2">
+                    <input
+                      className={field + " flex-1 py-2"}
+                      value={editName}
+                      autoFocus
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          run(() => renameCategoryAction(c.id, editName));
+                          setEditing(null);
+                        }
+                        if (e.key === "Escape") setEditing(null);
+                      }}
+                    />
+                    <button
+                      onClick={() => {
                         run(() => renameCategoryAction(c.id, editName));
                         setEditing(null);
-                      }
-                      if (e.key === "Escape") setEditing(null);
-                    }}
-                  />
+                      }}
+                      className="p-2 text-ink-soft hover:text-ink transition-colors"
+                      aria-label="Save"
+                    >
+                      <Check size={16} />
+                    </button>
+                    <button
+                      onClick={() => setEditing(null)}
+                      className="p-2 text-ink-soft hover:text-ink transition-colors"
+                      aria-label="Cancel"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm">
+                      {c.name}
+                      {!c.isActive && (
+                        <span className="ml-2 text-[10px] tracking-[0.15em] text-ink-soft">
+                          HIDDEN
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-ink-soft">
+                      /{c.slug} · {c.productCount}{" "}
+                      {c.productCount === 1 ? "product" : "products"} ·{" "}
+                      {c.sizes.length} {c.sizes.length === 1 ? "size" : "sizes"}
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {editing !== c.id && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() =>
+                      setSizesOpen(sizesOpen === c.id ? null : c.id)
+                    }
+                    className={`p-2 transition-colors ${sizesOpen === c.id ? "text-ink" : "text-ink-soft hover:text-ink"}`}
+                    aria-label="Sizes"
+                    title="Sizes for custom requests"
+                  >
+                    <Ruler size={15} />
+                  </button>
+
                   <button
                     onClick={() => {
-                      run(() => renameCategoryAction(c.id, editName));
-                      setEditing(null);
+                      setEditing(c.id);
+                      setEditName(c.name);
                     }}
                     className="p-2 text-ink-soft hover:text-ink transition-colors"
-                    aria-label="Save"
+                    aria-label="Rename"
                   >
-                    <Check size={16} />
+                    <Pencil size={15} />
                   </button>
+
                   <button
-                    onClick={() => setEditing(null)}
-                    className="p-2 text-ink-soft hover:text-ink transition-colors"
-                    aria-label="Cancel"
+                    onClick={() =>
+                      run(() => setCategoryActiveAction(c.id, !c.isActive))
+                    }
+                    disabled={pending}
+                    className="p-2 text-ink-soft hover:text-ink transition-colors disabled:opacity-40"
+                    aria-label={c.isActive ? "Hide" : "Show"}
                   >
-                    <X size={16} />
+                    {c.isActive ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+
+                  <button
+                    onClick={() => run(() => removeCategoryAction(c.id))}
+                    disabled={pending || c.productCount > 0}
+                    title={
+                      c.productCount > 0
+                        ? "Move or delete its products first"
+                        : "Delete"
+                    }
+                    className="p-2 text-ink-soft hover:text-red-800 transition-colors disabled:opacity-20"
+                    aria-label="Delete"
+                  >
+                    <Trash2 size={15} />
                   </button>
                 </div>
-              ) : (
-                <>
-                  <p className="text-sm">
-                    {c.name}
-                    {!c.isActive && (
-                      <span className="ml-2 text-[10px] tracking-[0.15em] text-ink-soft">
-                        HIDDEN
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-ink-soft">
-                    /{c.slug} · {c.productCount}{" "}
-                    {c.productCount === 1 ? "product" : "products"}
-                  </p>
-                </>
               )}
             </div>
 
-            {editing !== c.id && (
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => {
-                    setEditing(c.id);
-                    setEditName(c.name);
-                  }}
-                  className="p-2 text-ink-soft hover:text-ink transition-colors"
-                  aria-label="Rename"
-                >
-                  <Pencil size={15} />
-                </button>
-
-                <button
-                  onClick={() =>
-                    run(() => setCategoryActiveAction(c.id, !c.isActive))
-                  }
-                  disabled={pending}
-                  className="p-2 text-ink-soft hover:text-ink transition-colors disabled:opacity-40"
-                  aria-label={c.isActive ? "Hide" : "Show"}
-                >
-                  {c.isActive ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
-
-                <button
-                  onClick={() => run(() => removeCategoryAction(c.id))}
-                  disabled={pending || c.productCount > 0}
-                  title={
-                    c.productCount > 0
-                      ? "Move or delete its products first"
-                      : "Delete"
-                  }
-                  className="p-2 text-ink-soft hover:text-red-800 transition-colors disabled:opacity-20"
-                  aria-label="Delete"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
+            {sizesOpen === c.id && (
+              <CategorySizes
+                categoryId={c.id}
+                sizes={c.sizes}
+                customFactor={c.customFactor}
+              />
             )}
           </div>
         ))}

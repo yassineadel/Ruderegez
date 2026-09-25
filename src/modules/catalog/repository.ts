@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import type { Prisma, ProductType } from "@/generated/prisma/client";
+import type { Prisma, ProductType, CategorySize } from "@/generated/prisma/client";
 
 // ============================================================================
 //  TYPES
@@ -122,4 +122,55 @@ export function findTrendingProducts(take = 6): Promise<ProductCard[]> {
     orderBy: { createdAt: "desc" },
     take,
   });
+}
+
+// ============================================================================
+//  CUSTOM REQUEST PICKER
+// ============================================================================
+//  The "alter a Ruderegez design" step only needs a name and one photo per
+//  piece - not sizes, not pricing inputs. `select` keeps the payload small.
+// ============================================================================
+
+const FIRST_IMAGE = {
+  orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
+  take: 1,
+  select: { url: true },
+};
+
+export function findActiveProductType(id: string): Promise<ProductType | null> {
+  return prisma.productType.findFirst({ where: { id, isActive: true } });
+}
+
+export function findDesignsByType(typeId: string) {
+  return prisma.product.findMany({
+    where: { ...VISIBLE, typeId },
+    select: { id: true, name: true, images: FIRST_IMAGE },
+    orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
+  });
+}
+
+/** Same visibility rule as the storefront - a hidden piece can't be picked. */
+export function findDesignById(id: string) {
+  return prisma.product.findFirst({
+    where: { ...VISIBLE, id },
+    select: {
+      id: true,
+      name: true,
+      typeId: true,
+      factorBp: true,
+      isFlatPrice: true,
+      images: FIRST_IMAGE,
+    },
+  });
+}
+
+export function findCategorySizes(typeId: string): Promise<CategorySize[]> {
+  return prisma.categorySize.findMany({
+    where: { typeId },
+    orderBy: { sortOrder: "asc" },
+  });
+}
+
+export function findCategorySize(id: string): Promise<CategorySize | null> {
+  return prisma.categorySize.findUnique({ where: { id } });
 }

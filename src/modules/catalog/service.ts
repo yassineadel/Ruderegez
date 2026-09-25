@@ -8,6 +8,11 @@ import {
   findFeaturedProducts,
   findProductTypes,
   findTrendingProducts,
+  findDesignsByType,
+  findActiveProductType,
+  findDesignById,
+  findCategorySizes,
+  findCategorySize,
   type ProductCard,
   type ProductDetail,
   type ProductFilters,
@@ -99,3 +104,31 @@ export async function listTrending(take = 6): Promise<PricedProductCard[]> {
   }));
 }
 
+// ============================================================================
+//  CUSTOM REQUEST PICKER
+// ============================================================================
+
+export interface DesignPick {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+}
+
+/** Pieces a customer can choose to alter. No prices - the quote sets that. */
+export async function listDesignsForType(typeId: string): Promise<DesignPick[]> {
+  const rows = await findDesignsByType(typeId);
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    imageUrl: p.images[0]?.url ?? null,
+  }));
+}
+
+/** Pass-throughs for the custom module - it reads catalog rows through the
+ *  catalog service, never the catalog repository directly. */
+export {
+  findActiveProductType as getActiveCategory,
+  findDesignById as getDesignForRequest,
+  findCategorySizes as listCategorySizes,
+  findCategorySize as getCategorySize,
+};

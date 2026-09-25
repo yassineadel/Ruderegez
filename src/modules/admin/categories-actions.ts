@@ -7,15 +7,22 @@ import {
   setCategoryActive,
   removeCategory,
   moveCategory,
+  addCategorySize,
+  removeCategorySize,
+  setCategoryFactor,
 } from "./categories-service";
 import { type Result } from "./errors";
 
 const MESSAGES: Record<string, string> = {
+  SIZE_LABEL_INVALID: "Give the size a label of up to 30 characters.",
+  SIZE_WEIGHT_INVALID: "Enter a weight between 0.1 and 1000 grams.",
+  SIZE_EXISTS: "This category already has a size with that label.",
+  FACTOR_INVALID: "Enter a factor between 1 and 10 - for example 2.5.",
   NAME_REQUIRED: "Please give the category a name.",
   NAME_INVALID: "That name needs at least two letters or numbers.",
   CATEGORY_EXISTS: "A category with that name already exists.",
   CATEGORY_NOT_EMPTY:
-    "This category still has products in it. Hide it instead, or move the products first.",
+  "This category still has products in it. Hide it instead, or move the products first.",
   CATEGORY_NOT_FOUND: "That category no longer exists.",
   UNAUTHORIZED: "Please sign in again.",
   FORBIDDEN: "You do not have permission to do that.",
@@ -35,6 +42,7 @@ function revalidateAll() {
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath("/", "layout");
+  revalidatePath("/custom");
 }
 
 export async function addCategoryAction(name: string): Promise<Result> {
@@ -89,6 +97,43 @@ export async function moveCategoryAction(
 ): Promise<Result> {
   try {
     await moveCategory(id, direction);
+    revalidateAll();
+    return { ok: true };
+  } catch (err) {
+    return fail(err);
+  }
+}
+
+export async function addCategorySizeAction(
+  typeId: string,
+  label: string,
+  weightG: number,
+): Promise<Result> {
+  try {
+    await addCategorySize(typeId, label, weightG);
+    revalidateAll();
+    return { ok: true };
+  } catch (err) {
+    return fail(err);
+  }
+}
+
+export async function removeCategorySizeAction(id: string): Promise<Result> {
+  try {
+    await removeCategorySize(id);
+    revalidateAll();
+    return { ok: true };
+  } catch (err) {
+    return fail(err);
+  }
+}
+
+export async function setCategoryFactorAction(
+  id: string,
+  factor: number | null,
+): Promise<Result> {
+  try {
+    await setCategoryFactor(id, factor);
     revalidateAll();
     return { ok: true };
   } catch (err) {

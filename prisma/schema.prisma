@@ -76,6 +76,12 @@ enum PaymentProofStatus {
   REJECTED
 }
 
+/// Where a custom request starts from.
+enum CustomRequestSource {
+  NEW_DESIGN        // customer's own idea
+  RUDEREGEZ_DESIGN  // an existing catalog piece, altered
+}
+
 /// BRD 6.3 - the image-upload custom request path.
 enum CustomRequestStatus {
   SUBMITTED
@@ -130,7 +136,7 @@ model User {
   customRequests CustomRequest[]
   auditLogs      AuditLog[]      @relation("AuditActor")
 
-    reviews        Review[]
+  reviews        Review[]
   hiddenReviews  Review[]        @relation("ReviewHiddenBy")
 
   createdAt DateTime @default(now())
@@ -182,7 +188,7 @@ model VerificationToken {
   token      String   @unique
   expires    DateTime
   payload Json?
-   type       TokenType @default(SIGNUP)
+  type       TokenType @default(SIGNUP)
 
   @@unique([identifier, token])
 }
@@ -206,10 +212,33 @@ model ProductType {
   sortOrder Int     @default(0)
   isActive  Boolean @default(true)
 
-  products Product[]
+  /// Custom requests for a NEW design have no product to borrow a factor
+  /// from, so the estimate uses this one. Null = no estimate shown.
+  /// Basis points, same as Product.factorBp: 25000 = 2.5x
+  customFactorBp Int?
+
+  products       Product[]
+  sizes          CategorySize[]
+  customRequests CustomRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Standard sizes for a category, used by the custom request form.
+/// Each size carries a fixed weight so the customer never types one - the
+/// weight (and from it an estimated price) follows from the size they pick.
+model CategorySize {
+  id        String @id @default(cuid())
+  typeId    String
+  label     String // "1 cm", "1.5 cm", "18 cm"
+  weightMg  Int
+  sortOrder Int    @default(0)
+
+  type ProductType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+
+  @@unique([typeId, label])
+  @@index([typeId])
 }
 
 model Product {
@@ -261,8 +290,8 @@ model Product {
   sizes     ProductSize[]
   cartItems CartItem[]
   orderItems OrderItem[]
-
-    reviews    Review[]
+  reviews    Review[]
+  customRequests CustomRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -382,7 +411,25 @@ model CustomRequest {
 
   description String @db.Text
 
-   requestedSize     String?
+  // --- WHAT IT STARTS FROM -------------------------------------------------
+  source CustomRequestSource @default(NEW_DESIGN)
+
+  /// Category the piece belongs to. Nullable only because requests made
+  /// before the stepped form have none - the service always sets it now.
+  typeId String?
+  type   ProductType? @relation(fields: [typeId], references: [id])
+
+  /// RUDEREGEZ_DESIGN only - the catalog piece being altered.
+  /// SetNull: if the product row ever goes, the snapshot below survives.
+  baseProductId String?
+  baseProduct   Product? @relation(fields: [baseProductId], references: [id], onDelete: SetNull)
+
+  /// Snapshot at submission. The product's name or photos may change later;
+  /// the request must keep showing what the customer actually picked.
+  baseProductName String?
+  baseImageUrl    String?
+
+  requestedSize     String?
   requestedWeightMg Int?
 
   // --- ADMIN RESPONSE (FR-72) ---------------------------------------------
@@ -414,6 +461,7 @@ model CustomRequest {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([typeId])
 }
 
 /// BRD 6.3 upload limits, enforced in the service layer:
@@ -604,11 +652,11 @@ model OrderItem {
   unitPriceMinor Int
   lineTotalMinor Int
 
-   order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product       Product?       @relation(fields: [productId], references: [id])
   customRequest CustomRequest? @relation(fields: [customRequestId], references: [id])
 
-    reviews       Review[]
+  reviews       Review[]
 
   createdAt DateTime @default(now())
 
