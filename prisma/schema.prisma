@@ -743,6 +743,51 @@ model Setting {
   updatedByUserId String?
 }
 
+
+// =============================================================================
+// SILVER RATE  -  automatic sync from the international price
+// =============================================================================
+
+/// What happened to a fetched rate.
+enum SilverRateStatus {
+  APPLIED    // became the store rate
+  HELD       // moved more than the safety limit - waiting for the admin
+  DISMISSED  // a held rate the admin rejected
+}
+
+/// One row per rate that CHANGED something or needs the admin - not one per
+/// check. A check that finds the price barely moved writes nothing here; it
+/// only updates the "last checked" settings.
+///
+/// The inputs are kept so any rate can be explained later:
+///   rateMinor = usdPerOzCents/100 * egpPerUsdMilli/1000 / 31.1035 * 100
+model SilverRateSnapshot {
+  id     String           @id @default(cuid())
+  status SilverRateStatus
+
+  /// EGP per gram of pure silver, in piastres. 107.62 EGP -> 10762
+  rateMinor Int
+  /// The store rate at the time, for the before/after on the admin page.
+  previousRateMinor Int
+
+  /// International silver price, US cents per troy ounce. $64.74 -> 6474
+  usdPerOzCents  Int
+  /// USD -> EGP, x1000. 51.695 -> 51695
+  egpPerUsdMilli Int
+
+  /// "cron" or "admin" - who triggered the check.
+  trigger String
+
+  /// Set when an admin approves or dismisses a HELD rate.
+  resolvedByUserId String?
+  resolvedAt       DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
 // =============================================================================
 // AUDIT LOG  -  NFR-08
 // =============================================================================
