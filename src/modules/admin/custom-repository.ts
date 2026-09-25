@@ -2,7 +2,12 @@ import { prisma } from "@/lib/db";
 import type { Prisma, CustomRequestStatus } from "@/generated/prisma/client";
 
 export type AdminCustomRequest = Prisma.CustomRequestGetPayload<{
-  include: { images: true; user: { select: { id: true; name: true; email: true } } };
+  include: {
+    images: true;
+    user: { select: { id: true; name: true; email: true } };
+    type: { select: { name: true } };
+    baseProduct: { select: { slug: true } };
+  };
 }>;
 
 export function findCustomRequests(status?: CustomRequestStatus) {
@@ -11,6 +16,7 @@ export function findCustomRequests(status?: CustomRequestStatus) {
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       user: { select: { id: true, name: true, email: true } },
+       type: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -33,6 +39,8 @@ export function findCustomRequest(
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       user: { select: { id: true, name: true, email: true } },
+      type: { select: { name: true } },
+      baseProduct: { select: { slug: true } },
     },
   });
 }

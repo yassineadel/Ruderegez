@@ -58,29 +58,69 @@ export default async function AdminCustomRequestPage({
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-12 items-start max-w-5xl">
         <div>
+          {/* ---------------- what it starts from ---------------- */}
           <section className="mb-10">
             <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-4">
-              PHOTOS
+              {request.source === "RUDEREGEZ_DESIGN"
+                ? "ALTERING ONE OF OURS"
+                : "NEW DESIGN"}
+              {request.type && ` · ${request.type.name.toUpperCase()}`}
             </h2>
-            <div className="flex flex-wrap gap-3">
-              {request.images.map((img) => (
-                <a
-                  key={img.id}
-                  href={img.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-32 aspect-square bg-bone-deep overflow-hidden border border-line hover:border-ink transition-colors"
-                  title="Open full size"
-                >
-                  <img
-                    src={cloudinaryUrl(img.url, { width: 280, height: 280 })}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                </a>
-              ))}
-            </div>
+
+            {request.source === "RUDEREGEZ_DESIGN" && (
+              <div className="flex gap-5 items-center">
+                <div className="w-32 aspect-square bg-bone-deep overflow-hidden border border-line shrink-0">
+                  {request.baseImageUrl && (
+                    <img
+                      src={cloudinaryUrl(request.baseImageUrl, { width: 280, height: 280 })}
+                      alt={request.baseProductName ?? ""}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="text-sm">
+                  <p className="font-display text-xl mb-1">
+                    {request.baseProductName ?? "Unknown piece"}
+                  </p>
+                  {request.baseProduct && (
+                    <Link
+                      href={`/products/${request.baseProduct.slug}`}
+                      target="_blank"
+                      className="text-xs text-ink-soft underline underline-offset-4 hover:text-ink"
+                    >
+                      View the product
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
+
+          {request.images.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-4">
+                THEIR PHOTOS
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                {request.images.map((img) => (
+                  <Link
+                    key={img.id}
+                    href={img.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-32 aspect-square bg-bone-deep overflow-hidden border border-line hover:border-ink transition-colors"
+                    title="Open full size"
+                  >
+                    <img
+                      src={cloudinaryUrl(img.url, { width: 280, height: 280 })}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="mb-10">
             <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-3">
@@ -100,9 +140,7 @@ export default async function AdminCustomRequestPage({
                 )}
                 {request.requestedWeightMg && (
                   <div>
-                    <dt className="text-xs text-ink-soft mb-1">
-                      Their rough weight
-                    </dt>
+                    <dt className="text-xs text-ink-soft mb-1">Size weight</dt>
                     <dd>{(request.requestedWeightMg / 1000).toFixed(1)}g</dd>
                   </div>
                 )}

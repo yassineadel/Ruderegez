@@ -2,9 +2,12 @@ import { prisma } from "@/lib/db";
 import type { Prisma, CustomRequest } from "@/generated/prisma/client";
 
 export type CustomRequestDetail = Prisma.CustomRequestGetPayload<{
-  include: { images: true; user: { select: { name: true; email: true } } };
+  include: {
+    images: true;
+    user: { select: { name: true; email: true } };
+    type: { select: { name: true } };
+  };
 }>;
-
 export function findRequestByReference(
   reference: string,
 ): Promise<CustomRequestDetail | null> {
@@ -13,6 +16,7 @@ export function findRequestByReference(
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       user: { select: { name: true, email: true } },
+      type: { select: { name: true } },
     },
   });
 }
@@ -23,6 +27,7 @@ export function findRequestsForUser(userId: string): Promise<CustomRequestDetail
     include: {
       images: { orderBy: { sortOrder: "asc" } },
       user: { select: { name: true, email: true } },
+      type: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" },
   });

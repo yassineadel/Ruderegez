@@ -125,29 +125,59 @@ export default async function CustomRequestPage({
         </section>
       )}
 
+      {/* ---------------- what it starts from ---------------- */}
+      {request.source === "RUDEREGEZ_DESIGN" && (
+        <section className="mb-10">
+          <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-4">
+            THE PIECE YOU CHOSE
+            {request.type && ` · ${request.type.name.toUpperCase()}`}
+          </h2>
+          <div className="flex gap-5 items-center">
+            <div className="w-28 aspect-square bg-bone-deep overflow-hidden border border-line shrink-0">
+              {request.baseImageUrl && (
+                <img
+                  src={cloudinaryUrl(request.baseImageUrl, { width: 240, height: 240 })}
+                  alt={request.baseProductName ?? ""}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+            <p className="font-display text-xl">{request.baseProductName}</p>
+          </div>
+        </section>
+      )}
+
+      {request.source === "NEW_DESIGN" && request.type && (
+        <p className="text-[10px] tracking-[0.2em] text-ink-soft mb-10">
+          NEW DESIGN · {request.type.name.toUpperCase()}
+        </p>
+      )}
+
       {/* ---------------- what they sent ---------------- */}
-      <section className="mb-10">
-        <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-4">
-          YOUR PHOTOS
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          {request.images.map((img) => (
-            <Link
-              key={img.id}
-              href={img.url}
-              target="_blank"
-              rel="noreferrer"
-              className="w-28 aspect-square bg-bone-deep overflow-hidden border border-line hover:border-ink transition-colors"
-            >
-              <img
-                src={cloudinaryUrl(img.url, { width: 240, height: 240 })}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            </Link>
-          ))}
-        </div>
-      </section>
+      {request.images.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-4">
+            YOUR PHOTOS
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {request.images.map((img) => (
+              <Link
+                key={img.id}
+                href={img.url}
+                target="_blank"
+                rel="noreferrer"
+                className="w-28 aspect-square bg-bone-deep overflow-hidden border border-line hover:border-ink transition-colors"
+              >
+                <img
+                  src={cloudinaryUrl(img.url, { width: 240, height: 240 })}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mb-10">
         <h2 className="text-[10px] tracking-[0.2em] text-ink-soft mb-3">
@@ -167,7 +197,7 @@ export default async function CustomRequestPage({
             )}
             {request.requestedWeightMg && (
               <div>
-                <dt className="text-xs text-ink-soft mb-1">Rough weight</dt>
+                <dt className="text-xs text-ink-soft mb-1">Silver weight</dt>
                 <dd>{(request.requestedWeightMg / 1000).toFixed(1)}g</dd>
               </div>
             )}

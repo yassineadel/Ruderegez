@@ -83,9 +83,9 @@ export default async function AdminCustomRequestsPage({
               className="flex gap-4 px-4 py-4 border-b border-line last:border-0 hover:bg-bone-deep transition-colors"
             >
               <div className="w-16 aspect-square bg-bone-deep shrink-0 overflow-hidden">
-                {r.images[0] && (
+                {(r.images[0]?.url ?? r.baseImageUrl) && (
                   <img
-                    src={cloudinaryUrl(r.images[0].url, {
+                    src={cloudinaryUrl((r.images[0]?.url ?? r.baseImageUrl)!, {
                       width: 140,
                       height: 140,
                     })}

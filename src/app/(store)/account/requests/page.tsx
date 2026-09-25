@@ -49,9 +49,9 @@ export default async function AccountRequestsPage() {
               }
             >
               <div className="w-16 aspect-square bg-bone-deep shrink-0 overflow-hidden">
-                {r.images[0] && (
+                {(r.images[0]?.url ?? r.baseImageUrl) && (
                   <img
-                    src={cloudinaryUrl(r.images[0].url, {
+                    src={cloudinaryUrl((r.images[0]?.url ?? r.baseImageUrl)!, {
                       width: 140,
                       height: 140,
                     })}
