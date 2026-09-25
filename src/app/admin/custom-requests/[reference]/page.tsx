@@ -125,12 +125,12 @@ export default async function AdminCustomRequestPage({
                   <dd>
                     {request.quotedWeightMg
                       ? `${(request.quotedWeightMg / 1000).toFixed(1)}g`
-                      : "—"}
+                      : "-"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-ink-soft mb-1">Lead time</dt>
-                  <dd>{request.quotedLeadTimeDays ?? "—"} days</dd>
+                  <dd>{request.quotedLeadTimeDays ?? "-"} days</dd>
                 </div>
               </dl>
               {request.quoteNote && (
@@ -170,7 +170,7 @@ export default async function AdminCustomRequestPage({
               CUSTOMER
             </h2>
             <p className="text-sm leading-relaxed">
-              {request.user.name ?? "—"}
+              {request.user.name ?? "-"}
               <br />
               <span className="text-ink-soft">{request.user.email}</span>
             </p>

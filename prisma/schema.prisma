@@ -130,6 +130,9 @@ model User {
   customRequests CustomRequest[]
   auditLogs      AuditLog[]      @relation("AuditActor")
 
+    reviews        Review[]
+  hiddenReviews  Review[]        @relation("ReviewHiddenBy")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -258,6 +261,8 @@ model Product {
   sizes     ProductSize[]
   cartItems CartItem[]
   orderItems OrderItem[]
+
+    reviews    Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -603,6 +608,8 @@ model OrderItem {
   product       Product?       @relation(fields: [productId], references: [id])
   customRequest CustomRequest? @relation(fields: [customRequestId], references: [id])
 
+    reviews       Review[]
+
   createdAt DateTime @default(now())
 
   @@index([orderId])
@@ -727,12 +734,54 @@ model AuditLog {
 }
 
 // =============================================================================
+// REVIEWS  -  FR-36 to FR-38
+// =============================================================================
+
+/// FR-37 - only a customer who bought AND received the product may review it.
+/// orderItemId is the proof: it points at the DELIVERED order line that earned
+/// the right to review. If anyone asks "did this person really buy it?", this
+/// row answers it.
+///
+/// FR-38 - star rating and text only. No photos.
+///
+/// One review per customer per product. Buying the same ring twice means
+/// editing the existing review, not posting a second one.
+///
+/// Moderation: reviews go live immediately. The admin can HIDE a review for
+/// abuse or spam, with a logged reason - never delete it. Deleting negative
+/// reviews would destroy the credibility of the whole rating.
+model Review {
+  id          String @id @default(cuid())
+  productId   String
+  userId      String
+  orderItemId String
+
+  /// 1 to 5. Prisma cannot enforce the range - the service layer does.
+  rating Int
+  body   String @db.Text
+
+  /// Null = visible. Set = hidden by an admin, with the reason kept.
+  hiddenAt       DateTime?
+  hiddenReason   String?
+  hiddenByUserId String?
+
+  product   Product   @relation(fields: [productId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  hiddenBy  User?     @relation("ReviewHiddenBy", fields: [hiddenByUserId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([productId, hiddenAt])
+  @@index([createdAt])
+}
+
+// =============================================================================
 // DELIBERATELY NOT IN V1
 // =============================================================================
 //
-//   Review          - FR-36 to FR-38. Cut to release 1.1. Verified-purchaser
-//                     logic plus moderation is ~1.5 days and a brand-new
-//                     store has no reviews on launch day anyway.
 //
 //   DiscountCode    - cut to 1.1. Not needed to take money.
 //

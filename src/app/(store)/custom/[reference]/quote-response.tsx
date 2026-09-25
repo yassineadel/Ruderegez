@@ -34,7 +34,7 @@ export default function QuoteResponse({ reference }: { reference: string }) {
             disabled={pending}
             className="w-full bg-ink text-bone py-4 text-xs tracking-[0.2em] disabled:opacity-40 hover:opacity-90 transition-opacity"
           >
-            {pending ? "ADDING…" : "ACCEPT — ADD TO MY BAG →"}
+            {pending ? "ADDING…" : "ACCEPT - ADD TO MY BAG →"}
           </button>
 
           <button

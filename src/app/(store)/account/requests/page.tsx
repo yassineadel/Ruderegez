@@ -71,7 +71,7 @@ export default async function AccountRequestsPage() {
                   {needsYou && r.quotedPriceMinor && (
                     <span className="text-ink">
                       {" "}
-                      — {formatEGP(r.quotedPriceMinor as Minor)}, waiting on you
+                      - {formatEGP(r.quotedPriceMinor as Minor)}, waiting on you
                     </span>
                   )}
                 </p>

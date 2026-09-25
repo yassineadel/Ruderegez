@@ -19,6 +19,12 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const justVerified = searchParams.get("verified") === "1";
 
+  // Where to go after signing in. Only same-site paths are accepted -
+  // "//evil.com" or "https://evil.com" would turn this into an open redirect.
+  const rawNext = searchParams.get("next") ?? "/";
+  const next =
+    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -41,7 +47,7 @@ function SignInForm() {
         return;
       }
 
-      router.push("/");
+      router.push(next);
       router.refresh();
     });
   }
@@ -62,7 +68,7 @@ function SignInForm() {
       )}
 
       <button
-        onClick={() => signIn("google", { callbackUrl: "/" })}
+        onClick={() => signIn("google", { callbackUrl: next })}
         className="w-full border border-ink py-3.5 text-xs tracking-[0.2em] hover:bg-ink hover:text-bone transition-colors mb-7"
       >
         CONTINUE WITH GOOGLE

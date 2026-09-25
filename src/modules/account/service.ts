@@ -10,7 +10,7 @@ export async function getMyCustomRequests() {
   return findRequestsForUser(user.id);
 }
 
-/** How many things are waiting on the customer — quotes they haven't answered. */
+/** How many things are waiting on the customer - quotes they haven't answered. */
 export async function countAwaitingResponse(): Promise<number> {
   const user = await requireUser();
   return prisma.customRequest.count({

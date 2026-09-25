@@ -116,7 +116,7 @@ export async function placeOrder(input: PlaceOrderInput) {
         imageUrlSnapshot: line.imageUrl,
         sizeSnapshot: line.size || null,
 
-        // The quote's own weight. factorBp is 0 because there was no factor —
+        // The quote's own weight. factorBp is 0 because there was no factor -
         // this piece was priced by hand, not by formula, and zero says that
         // rather than pretending otherwise.
         weightMgSnapshot: cr?.quotedWeightMg ?? 0,

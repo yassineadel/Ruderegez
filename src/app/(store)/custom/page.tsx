@@ -22,7 +22,7 @@ export default async function CustomPage() {
           Something of your own
         </h1>
         <p className="text-sm text-ink-soft leading-relaxed mb-12">
-          Send us a photo of what you have in mind — a sketch, a screenshot, a
+          Send us a photo of what you have in mind - a sketch, a screenshot, a
           piece you have seen. We&apos;ll come back with a price and a timeline
           within {slaMin}–{slaMax} days. Nothing is charged until you accept.
         </p>

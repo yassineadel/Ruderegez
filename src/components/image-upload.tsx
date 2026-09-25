@@ -15,8 +15,8 @@ export default function ImageUpload({
 }: {
   value: string;
   onChange: (url: string) => void;
-  /** Optional. Callers that need the file's size and type — CustomRequestImage
-   *  requires both — use this instead of onChange. */
+  /** Optional. Callers that need the file's size and type - CustomRequestImage
+   *  requires both - use this instead of onChange. */
   onUpload?: (file: {
     url: string;
     sizeBytes: number;
@@ -73,7 +73,7 @@ export default function ImageUpload({
       onChange(data.secure_url);
 
       // The size and type come from the File the browser gave us, not from
-      // Cloudinary's response — they were already in hand before the upload.
+      // Cloudinary's response - they were already in hand before the upload.
       onUpload?.({
         url: data.secure_url,
         sizeBytes: file.size,

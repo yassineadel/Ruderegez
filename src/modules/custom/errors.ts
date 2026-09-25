@@ -14,7 +14,7 @@ export const CUSTOM_ERRORS = {
 const MESSAGES: Record<string, string> = {
   [CUSTOM_ERRORS.NOT_SIGNED_IN]: "Please sign in to send a request.",
   [CUSTOM_ERRORS.DESCRIPTION_REQUIRED]:
-    "Please describe what you'd like — a sentence or two is enough.",
+    "Please describe what you'd like - a sentence or two is enough.",
   [CUSTOM_ERRORS.IMAGES_REQUIRED]: "Please add at least one photo.",
   [CUSTOM_ERRORS.TOO_MANY_IMAGES]: "Please add no more than six photos.",
   [CUSTOM_ERRORS.INVALID_UPLOAD]: "One of those uploads didn't work. Please try again.",

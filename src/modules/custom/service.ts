@@ -10,7 +10,7 @@ import {
 const MAX_IMAGES = 6;
 
 /**
- * CR-2609-0117 — same shape as an order reference but a different prefix, so
+ * CR-2609-0117 - same shape as an order reference but a different prefix, so
  * nobody reads a request number over the phone and gets an order pulled up.
  */
 function generateRequestReference(): string {
@@ -24,7 +24,7 @@ function generateRequestReference(): string {
 export interface SubmitRequestInput {
   description: string;
   requestedSize?: string;
-  /** Grams as the customer typed them — converted to milligrams here. */
+  /** Grams as the customer typed them - converted to milligrams here. */
   requestedWeightG?: number | null;
   images: { url: string; sizeBytes: number; mimeType: string }[];
 }

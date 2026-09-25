@@ -20,7 +20,7 @@ export default async function StoreLayout({
 }) {
   const [session, cartCount] = await Promise.all([auth(), getCartCount()]);
 
-  // Only meaningful once signed in — countAwaitingResponse calls requireUser,
+  // Only meaningful once signed in - countAwaitingResponse calls requireUser,
   // which throws for a guest. The catch keeps a guest visit from 500ing.
   const awaitingCount = session?.user
     ? await countAwaitingResponse().catch(() => 0)

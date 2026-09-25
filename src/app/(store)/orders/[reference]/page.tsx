@@ -6,6 +6,7 @@ import { getSetting } from "@/lib/settings";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
 import { cloudinaryUrl } from "@/lib/cloudinary";
+import { getReviewLinks } from "@/modules/reviews/service";
 import PaymentProof from "./payment-proof";
 
 
@@ -31,6 +32,17 @@ export default async function OrderPage({
     getSetting("instapayAccountName"),
     getSetting("vodafoneCashNumber"),
   ]);
+
+  // FR-37 - reviews open once the order is delivered. Only the owner gets the
+  // links; an admin viewing the order has nothing to review.
+  const reviewLinks =
+    isOwner && order.status === "DELIVERED"
+      ? await getReviewLinks(
+          order.items
+            .filter((i) => i.kind === "CATALOG" && i.productId)
+            .map((i) => i.productId as string),
+        )
+      : {};
 
   const awaitingPayment = order.status === "PLACED";
   const underReview = order.status === "PAYMENT_UNDER_REVIEW";
@@ -168,6 +180,16 @@ export default async function OrderPage({
                     <p className="text-xs text-ink-soft mt-1">
                       Quantity {item.quantity}
                     </p>
+                  )}
+                  {item.productId && reviewLinks[item.productId] && (
+                    <Link
+                      href={`/products/${reviewLinks[item.productId].slug}#reviews`}
+                      className="inline-block mt-3 text-xs underline underline-offset-4 text-ink-soft hover:text-ink transition-colors"
+                    >
+                      {reviewLinks[item.productId].reviewed
+                        ? "Edit your review"
+                        : "Review this piece"}
+                    </Link>
                   )}
                 </div>
                 <p className="text-sm shrink-0">

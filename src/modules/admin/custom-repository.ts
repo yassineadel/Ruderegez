@@ -47,7 +47,7 @@ export function markUnderReview(id: string) {
 /**
  * Writes the quote AND an audit row together.
  *
- * A quote is a price offered to a customer — NFR-08's requirement that money
+ * A quote is a price offered to a customer - NFR-08's requirement that money
  * decisions be explainable applies here as much as to the silver rate.
  */
 export function saveQuote(data: {

@@ -34,7 +34,7 @@ export default function CartLines({ lines }: { lines: CartLine[] }) {
 
       <ul className={pending ? "opacity-60 transition-opacity" : ""}>
         {lines.map((line) => {
-          // A custom line's slug is "custom/CR-xxxx" — a route in its own
+          // A custom line's slug is "custom/CR-xxxx" - a route in its own
           // right, not a product. /products/custom/CR-xxxx would 404.
           const href = line.isCustom
             ? `/${line.slug}`
@@ -86,7 +86,7 @@ export default function CartLines({ lines }: { lines: CartLine[] }) {
                 </div>
 
                 <div className="flex items-end justify-between mt-5">
-                  {/* One accepted quote is one piece — there is nothing to
+                  {/* One accepted quote is one piece - there is nothing to
                       increment, so the control is replaced rather than
                       disabled. */}
                   {line.isCustom ? (
@@ -137,7 +137,7 @@ export default function CartLines({ lines }: { lines: CartLine[] }) {
 
                 {line.isCustom && (
                   <p className="mt-3 text-xs text-ink-soft">
-                    Quoted price — this will not change.
+                    Quoted price - this will not change.
                   </p>
                 )}
               </div>

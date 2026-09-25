@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductDetail } from "@/modules/catalog/service";
+import { getProductReviews, getMyReviewState } from "@/modules/reviews/service";
 import ProductGallery from "./gallery";
 import AddToBag from "./add-to-bag";
+import Stars from "./stars";
+import Reviews from "./reviews";
 
 export default async function ProductPage({
   params,
@@ -12,6 +16,12 @@ export default async function ProductPage({
   const product = await getProductDetail(slug);
 
   if (!product) notFound();
+
+  // Both need the product id, and neither depends on the other.
+  const [{ reviews, average, count }, myState] = await Promise.all([
+    getProductReviews(product.id),
+    getMyReviewState(product.id),
+  ]);
 
   return (
     <div className="px-6 py-16 lg:px-12 lg:py-24">
@@ -26,6 +36,18 @@ export default async function ProductPage({
           <h1 className="font-display text-4xl font-light mb-4">
             {product.name}
           </h1>
+
+          {average !== null && (
+            <Link
+              href="#reviews"
+              className="inline-flex items-center gap-2 mb-6 text-ink-soft hover:text-ink transition-colors"
+            >
+              <Stars rating={average} size="text-xs" />
+              <span className="text-xs underline underline-offset-4">
+                {average.toFixed(1)} ({count})
+              </span>
+            </Link>
+          )}
 
           <AddToBag
             productId={product.id}
@@ -53,6 +75,15 @@ export default async function ProductPage({
           </div>
         </div>
       </div>
+
+      <Reviews
+        productId={product.id}
+        slug={product.slug}
+        reviews={reviews}
+        average={average}
+        count={count}
+        myState={myState}
+      />
     </div>
   );
 }

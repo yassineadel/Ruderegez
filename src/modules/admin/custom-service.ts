@@ -17,7 +17,7 @@ const ALLOWED: Record<CustomRequestStatus, CustomRequestStatus[]> = {
   SUBMITTED: ["UNDER_REVIEW", "QUOTED", "REJECTED"],
   UNDER_REVIEW: ["QUOTED", "REJECTED"],
   // Re-quoting overwrites the previous figures. Allowed while the customer
-  // hasn't answered — an admin who mistyped a price needs to fix it.
+  // hasn't answered - an admin who mistyped a price needs to fix it.
   QUOTED: ["QUOTED", "REJECTED"],
   ACCEPTED: [],
   DECLINED: [],
@@ -47,7 +47,7 @@ export async function startReview(reference: string) {
 }
 
 /**
- * The price is computed from weight and factor, not typed in — so a custom
+ * The price is computed from weight and factor, not typed in - so a custom
  * piece is priced the same way a catalog piece is, and moves with the silver
  * rate identically. The admin can still override the result.
  */

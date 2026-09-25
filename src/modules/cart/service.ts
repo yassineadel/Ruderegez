@@ -24,7 +24,7 @@ export interface CartLine {
   unitPriceMinor: Minor;
   lineTotalMinor: Minor;
   priceChanged: boolean;
-  /** True for an accepted quote — no product, price frozen, quantity fixed. */
+  /** True for an accepted quote - no product, price frozen, quantity fixed. */
   isCustom: boolean;
 }
 
@@ -63,14 +63,14 @@ export async function getCartView(): Promise<CartView> {
         id: item.id,
         productId: "",
         slug: `custom/${cr.reference}`,
-        name: `Custom piece — ${cr.reference}`,
+        name: `Custom piece - ${cr.reference}`,
         typeName: "MADE TO ORDER",
         imageUrl: cr.images[0]?.url ?? null,
         size: cr.requestedSize ?? "",
         quantity: item.quantity,
         unitPriceMinor: item.unitPriceMinor as Minor,
         lineTotalMinor: (item.unitPriceMinor * item.quantity) as Minor,
-        // A quoted price never "changes" — that is the point of quoting.
+        // A quoted price never "changes" - that is the point of quoting.
         priceChanged: false,
       });
       continue;

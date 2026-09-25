@@ -10,7 +10,7 @@ import {
   rejectCustomRequestAction,
 } from "@/modules/admin/custom-actions";
 
-/** BRD 6.3 names copyright as a required ground — a customer uploading a club
+/** BRD 6.3 names copyright as a required ground - a customer uploading a club
  *  crest or a brand logo puts the legal risk on the shop. */
 const REJECT_REASONS = [
   "The design is copyrighted or trademarked, so we can't make it.",
@@ -175,7 +175,7 @@ export default function QuoteControls({
           disabled={pending || finalPrice <= 0}
           className="mt-5 w-full bg-ink text-bone py-3 text-xs tracking-[0.2em] disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
-          {pending ? "SENDING…" : `SEND QUOTE — ${formatEGP(finalPrice as Minor)}`}
+          {pending ? "SENDING…" : `SEND QUOTE - ${formatEGP(finalPrice as Minor)}`}
         </button>
       </div>
 
@@ -211,7 +211,7 @@ export default function QuoteControls({
 
             <textarea
               className={field + " min-h-20 resize-y"}
-              placeholder="Or write your own — the customer sees this."
+              placeholder="Or write your own - the customer sees this."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />

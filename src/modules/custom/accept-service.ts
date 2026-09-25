@@ -24,7 +24,7 @@ export async function acceptQuote(reference: string): Promise<void> {
 
   const cart = await getOrCreateCart();
 
-  // The unique index is [cartId, productId, size] — both null here, and
+  // The unique index is [cartId, productId, size] - both null here, and
   // Postgres treats two NULLs as different values, so it will NOT stop a
   // duplicate. This check is the only thing that does.
   const existing = await prisma.cartItem.findFirst({

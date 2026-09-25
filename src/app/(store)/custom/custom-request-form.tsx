@@ -53,7 +53,7 @@ export default function CustomRequestForm() {
         <span className={label}>PHOTOS</span>
         <p className="text-xs text-ink-soft mb-4 leading-relaxed">
           Up to {MAX_IMAGES}. A reference photo, a sketch, or something similar
-          you like — whatever shows us what you mean.
+          you like - whatever shows us what you mean.
         </p>
 
         {images.length > 0 && (
@@ -85,7 +85,7 @@ export default function CustomRequestForm() {
           <ImageUpload
             value=""
             onChange={() => {
-              /* handled by onUpload — we need the size and type too */
+              /* handled by onUpload - we need the size and type too */
             }}
             onUpload={(file) => setImages((prev) => [...prev, file])}
             folder="designs"
@@ -99,7 +99,7 @@ export default function CustomRequestForm() {
           <span className={label}>WHAT ARE YOU AFTER?</span>
           <textarea
             className={field + " min-h-32 resize-y"}
-            placeholder="Describe the piece — the style, any detail that matters, who it's for."
+            placeholder="Describe the piece - the style, any detail that matters, who it's for."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -131,7 +131,7 @@ export default function CustomRequestForm() {
             onChange={(e) => setWeight(e.target.value)}
           />
           <span className="block text-xs text-ink-soft mt-2">
-            Optional. Leave it blank if you&apos;re not sure — most people
+            Optional. Leave it blank if you&apos;re not sure - most people
             aren&apos;t, and we&apos;ll suggest one.
           </span>
         </label>

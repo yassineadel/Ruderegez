@@ -39,7 +39,7 @@ export async function requestReferenceExists(reference: string): Promise<boolean
 /**
  * Creates the request and its images together.
  *
- * A request with no images is a request nobody can quote — the photos ARE the
+ * A request with no images is a request nobody can quote - the photos ARE the
  * brief. Either both land or neither does.
  */
 export function createRequestTransaction(data: {
