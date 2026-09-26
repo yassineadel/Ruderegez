@@ -37,7 +37,22 @@ datasource db {
 
 enum UserRole {
   CUSTOMER
+  STAFF
   ADMIN
+}
+
+/// The admin-panel sections an owner can grant to staff. Managing staff is
+/// deliberately NOT here - it can never be granted, only owners have it.
+enum AdminPermission {
+  ORDERS           // view orders, change their status
+  PAYMENTS         // confirm or reject payment receipts
+  PRODUCTS
+  CATEGORIES       // categories and their sizes
+  CUSTOM_REQUESTS  // quote or reject
+  REVIEWS          // hide or restore
+  POLICIES
+  SETTINGS         // every field on the settings page
+  SILVER_RATE      // "Update now", approve or dismiss held rates
 }
 
 /// BRD 5.3 - audience is one of two independent category dimensions.
@@ -119,6 +134,8 @@ model User {
 
   role          UserRole  @default(CUSTOMER)
 
+  permissions   AdminPermission[] @default([])
+
   /// BRD 9.3 - admin can block a customer from signing in or ordering.
   isBlocked     Boolean   @default(false)
   blockedReason String?
@@ -145,6 +162,20 @@ model User {
 
   @@index([role])
   @@index([createdAt])
+}
+
+/// Access granted to an email that has no account yet. When someone signs in
+/// with this email (verified), they become STAFF with these permissions and
+/// the invite is deleted.
+model StaffInvite {
+  id          String            @id @default(cuid())
+  email       String            @unique // stored lower-case
+  permissions AdminPermission[]
+
+  invitedByUserId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 /// One row per external sign-in provider linked to a user.

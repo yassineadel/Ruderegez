@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db";
+import { claimStaffInviteOnSignIn } from "@/modules/staff/service";
 import { verifyPassword } from "@/lib/password";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -51,6 +52,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+
+ events: {
+    // Runs after every successful sign-in, Google or email. If an owner
+    // invited this email to the admin panel, this is where they get access.
+    async signIn({ user }) {
+      await claimStaffInviteOnSignIn(user.id);
+    },
+  },
 
   callbacks: {
     // Runs when the token is created and on every refresh.
