@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth-guards";
+import { requirePermission, requireAnyPermission } from "@/lib/auth-guards";
 import type { OrderStatus } from "@/generated/prisma/client";
 import {
   findOrders,
@@ -33,13 +33,30 @@ export function allowedNext(status: OrderStatus): OrderStatus[] {
   return ALLOWED[status];
 }
 
+
+/** For the order page: which of the allowed moves need PAYMENTS. */
+export function paymentMoves(status: OrderStatus): OrderStatus[] {
+  return ALLOWED[status].filter((to) => isPaymentDecision(status, to));
+}
+
+/**
+ * Moves that are really payment decisions. Confirming an order that is
+ * waiting on payment, or sending it back to "placed" (receipt rejected),
+ * needs PAYMENTS - otherwise ORDERS-only staff could approve money through
+ * the status buttons and skip the payment check entirely.
+ */
+function isPaymentDecision(from: OrderStatus, to: OrderStatus): boolean {
+  const awaiting = from === "PLACED" || from === "PAYMENT_UNDER_REVIEW";
+  return awaiting && (to === "CONFIRMED" || to === "PLACED" || to === "PAYMENT_UNDER_REVIEW");
+}
+
 export async function listOrders(filters: {
   status?: OrderStatus;
   search?: string;
   skip?: number;
   take?: number;
 }) {
-  await requireAdmin();
+    await requireAnyPermission(["ORDERS", "PAYMENTS"]);
   const [orders, total, counts] = await Promise.all([
     findOrders(filters),
     countOrders(filters),
@@ -49,7 +66,7 @@ export async function listOrders(filters: {
 }
 
 export async function getOrder(reference: string) {
-  await requireAdmin();
+  await requireAnyPermission(["ORDERS", "PAYMENTS"]);
   return findOrderDetail(reference);
 }
 
@@ -58,9 +75,12 @@ export async function changeStatus(input: {
   toStatus: OrderStatus;
   note?: string;
 }) {
-  const admin = await requireAdmin();
+    const order = await findOrderDetail(input.reference);
+  if (!order) throw new Error("ORDER_NOT_FOUND");
 
-  const order = await findOrderDetail(input.reference);
+  const admin = await requirePermission(
+    isPaymentDecision(order.status, input.toStatus) ? "PAYMENTS" : "ORDERS",
+  );
   if (!order) throw new Error("ORDER_NOT_FOUND");
 
   if (!ALLOWED[order.status].includes(input.toStatus)) {
@@ -86,7 +106,7 @@ export async function confirmPayment(input: {
   amountMinor: number;
   referenceNumber?: string;
 }) {
-  const admin = await requireAdmin();
+    const admin = await requirePermission("PAYMENTS");
 
   const order = await findOrderDetail(input.reference);
   if (!order) throw new Error("ORDER_NOT_FOUND");

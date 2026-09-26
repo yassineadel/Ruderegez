@@ -4,12 +4,14 @@ import { getPricingSettings } from "@/lib/settings";
 import { priceProduct } from "@/modules/pricing/price-product";
 import { formatEGP } from "@/lib/money";
 import ProductRowActions from "./product-row-actions";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 export default async function AdminProductsPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; visibility?: string; type?: string }>;
 }) {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const params = await searchParams;
   const hidden =
     params.visibility === "hidden"

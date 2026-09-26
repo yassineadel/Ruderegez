@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getOrder, allowedNext } from "@/modules/admin/orders-service";
+import { requirePagePermission, can } from "@/lib/auth-guards";
+import { getOrder, allowedNext, paymentMoves } from "@/modules/admin/orders-service";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
 import { cloudinaryUrl } from "@/lib/cloudinary";
@@ -22,13 +23,20 @@ export default async function AdminOrderPage({
 }: {
   params: Promise<{ reference: string }>;
 }) {
+  const me = await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const { reference } = await params;
   const order = await getOrder(reference);
   if (!order) notFound();
 
-  const next = allowedNext(order.status);
+    // Only offer the moves this person may make. Payment decisions need
+  // PAYMENTS; everything else needs ORDERS. The server checks again.
+  const moneyMoves = paymentMoves(order.status);
+  const next = allowedNext(order.status).filter((to) =>
+    moneyMoves.includes(to) ? can(me, "PAYMENTS") : can(me, "ORDERS"),
+  );
   const awaitingPayment =
-    order.status === "PLACED" || order.status === "PAYMENT_UNDER_REVIEW";
+    (order.status === "PLACED" || order.status === "PAYMENT_UNDER_REVIEW") &&
+    can(me, "PAYMENTS");
 
   // If the customer uploaded proof, default the confirm box to what they say
   // they sent - he is verifying their claim, not typing a fresh number.

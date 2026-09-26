@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { userHasAnyPermission } from "@/lib/auth-guards";
 import { getRequest } from "@/modules/custom/service";
 import { getSetting } from "@/lib/settings";
 import { cloudinaryUrl } from "@/lib/cloudinary";
@@ -20,7 +21,10 @@ export default async function CustomRequestPage({
   if (!request) notFound();
 
   const isOwner = session?.user?.id === request.userId;
-  const isAdmin = session?.user?.role === "ADMIN";
+    // Staff with the right section may open it too - checked in the database.
+  const isAdmin = isOwner
+    ? false
+    : await userHasAnyPermission(session?.user?.id, ["CUSTOM_REQUESTS"]);
   if (!isOwner && !isAdmin) notFound();
 
   const [slaMin, slaMax] = await Promise.all([

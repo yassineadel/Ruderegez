@@ -3,6 +3,7 @@ import { listOrders } from "@/modules/admin/orders-service";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
 import type { OrderStatus } from "@/generated/prisma/client";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 const STATUSES: OrderStatus[] = [
   "PLACED",
@@ -31,6 +32,7 @@ export default async function AdminOrdersPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const params = await searchParams;
   const status = STATUSES.includes(params.status as OrderStatus)
     ? (params.status as OrderStatus)

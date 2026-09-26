@@ -3,6 +3,7 @@ import { getCartCount } from "@/modules/cart/service";
 import { countAwaitingResponse } from "@/modules/account/service";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
+import { hasAdminAccess } from "@/lib/auth-guards";
 
 /**
  * Wraps every customer-facing page. (auth) and /admin have their own layouts,
@@ -19,6 +20,10 @@ export default async function StoreLayout({
   children: React.ReactNode;
 }) {
   const [session, cartCount] = await Promise.all([auth(), getCartCount()]);
+  
+  // Read from the database, not the session - the session still holds the
+  // role from sign-in, so newly added staff would not see the link.
+  const showAdmin = await hasAdminAccess(session?.user?.id);
 
   // Only meaningful once signed in - countAwaitingResponse calls requireUser,
   // which throws for a guest. The catch keeps a guest visit from 500ing.
@@ -35,7 +40,7 @@ export default async function StoreLayout({
     <div className="min-h-screen flex flex-col">
       <SiteHeader
         isSignedIn={Boolean(session?.user)}
-        isAdmin={session?.user?.role === "ADMIN"}
+        isAdmin={showAdmin}
         cartCount={cartCount}
         awaitingCount={awaitingCount}
         onSignOut={handleSignOut}

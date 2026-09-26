@@ -4,6 +4,7 @@ import { cloudinaryUrl } from "@/lib/cloudinary";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
 import type { CustomRequestStatus } from "@/generated/prisma/client";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 const STATUSES: CustomRequestStatus[] = [
   "SUBMITTED",
@@ -28,6 +29,7 @@ export default async function AdminCustomRequestsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const params = await searchParams;
   const status = STATUSES.includes(params.status as CustomRequestStatus)
     ? (params.status as CustomRequestStatus)

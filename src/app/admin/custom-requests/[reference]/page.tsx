@@ -6,6 +6,7 @@ import { cloudinaryUrl } from "@/lib/cloudinary";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
 import QuoteControls from "./quote-controls";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 const LABEL: Record<string, string> = {
   SUBMITTED: "New",
@@ -21,6 +22,7 @@ export default async function AdminCustomRequestPage({
 }: {
   params: Promise<{ reference: string }>;
 }) {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const { reference } = await params;
   const [request, settings] = await Promise.all([
     getCustomRequest(reference),

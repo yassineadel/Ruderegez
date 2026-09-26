@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth-guards";
+import { requirePermission } from "@/lib/auth-guards";
 import type { Minor } from "@/lib/money";
 import { fetchSilverUsdPerOz, fetchEgpPerUsd, toRateMinor } from "./rate-sources";
 import {
@@ -173,13 +173,13 @@ export async function runSilverRateSync(
 
 /** "Update now" - same rules as the cron, run on demand. */
 export async function syncSilverRateNow(): Promise<SyncResult> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("SILVER_RATE");
   return runSilverRateSync("admin", admin.id);
 }
 
 /** Apply a rate that was held for moving more than 40%. */
 export async function approveHeldRate(snapshotId: string) {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("SILVER_RATE");
 
   const held = await findSnapshot(snapshotId);
   if (!held || held.status !== "HELD" || held.resolvedAt) {
@@ -205,13 +205,13 @@ export async function approveHeldRate(snapshotId: string) {
 }
 
 export async function dismissHeldRate() {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("SILVER_RATE");
   await dismissOpenHeld(admin.id);
 }
 
 /** Everything the admin panel shows. */
 export async function getSilverRateStatus() {
-  await requireAdmin();
+  await requirePermission("SILVER_RATE");
   const [state, held, history] = await Promise.all([
     readSyncState(),
     findOpenHeld(),

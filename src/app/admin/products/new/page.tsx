@@ -1,7 +1,9 @@
 import { getProductFormOptions } from "@/modules/admin/products-service";
 import ProductForm from "../product-form";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 export default async function NewProductPage() {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const { types, settings } = await getProductFormOptions();
 
   return (

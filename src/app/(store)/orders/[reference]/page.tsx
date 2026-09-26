@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { userHasAnyPermission } from "@/lib/auth-guards";
 import { findOrderByReference } from "@/modules/orders/repository";
 import { getSetting } from "@/lib/settings";
 import { formatEGP } from "@/lib/money";
@@ -24,7 +25,10 @@ export default async function OrderPage({
   // Only the owner or an admin may see an order. notFound rather than a
   // "forbidden" page - someone guessing references learns nothing.
   const isOwner = session?.user?.id === order.userId;
-  const isAdmin = session?.user?.role === "ADMIN";
+    // Staff with the right section may open it too - checked in the database.
+  const isAdmin = isOwner
+    ? false
+    : await userHasAnyPermission(session?.user?.id, ["ORDERS", "PAYMENTS"]);
   if (!isOwner && !isAdmin) notFound();
 
   const [instapay, instapayName, vodafone] = await Promise.all([

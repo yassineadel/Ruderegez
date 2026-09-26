@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth-guards";
+import { requirePermission } from "@/lib/auth-guards";
 import { getPricingSettings } from "@/lib/settings";
 import { toMinor } from "@/lib/money";
 import { findProductTypes } from "@/modules/catalog/repository";
@@ -52,7 +52,7 @@ export async function listAdminProducts(filters: {
   hidden?: boolean;
   typeSlug?: string;
 }) {
-  await requireAdmin();
+  await requirePermission("PRODUCTS");
   const [products, types] = await Promise.all([
     findAdminProducts(filters),
     findProductTypes(),
@@ -61,12 +61,12 @@ export async function listAdminProducts(filters: {
 }
 
 export async function getAdminProduct(id: string) {
-  await requireAdmin();
+  await requirePermission("PRODUCTS");
   return findAdminProductById(id);
 }
 
 export async function getProductFormOptions() {
-  await requireAdmin();
+  await requirePermission("PRODUCTS");
   const [types, settings] = await Promise.all([
     findProductTypes(),
     getPricingSettings(),
@@ -136,14 +136,14 @@ async function validate(input: ProductFormInput): Promise<{
 }
 
 export async function createProduct(input: ProductFormInput) {
-  await requireAdmin();
+  await requirePermission("PRODUCTS");
   const { product, sizes, images } = await validate(input);
   const created = await createProductTransaction(product, sizes, images);
   return { id: created.id, slug: created.slug };
 }
 
 export async function updateProduct(input: ProductFormInput) {
-  await requireAdmin();
+  await requirePermission("PRODUCTS");
   if (!input.id) throw new Error("PRODUCT_NOT_FOUND");
   const { product, sizes, images } = await validate(input);
   const updated = await updateProductTransaction(input.id, product, sizes, images);
@@ -151,11 +151,11 @@ export async function updateProduct(input: ProductFormInput) {
 }
 
 export async function toggleHidden(id: string, isHidden: boolean) {
-  await requireAdmin();
+  await requirePermission("PRODUCTS");
   await setProductHidden(id, isHidden);
 }
 
 export async function deleteProduct(id: string) {
-  await requireAdmin();
+  await requirePermission("PRODUCTS");
   await softDeleteProduct(id);
 }

@@ -1,7 +1,12 @@
-import { requireAdmin } from "@/lib/auth-guards";
+import { requireAnyPermission, requireStaff, can } from "@/lib/auth-guards";
 import { toMinor, fromMinor } from "@/lib/money";
 import type { Minor } from "@/lib/money";
-import { EDITABLE_KEYS, FIELD_BY_KEY, type SettingField } from "./settings-fields";
+import {
+  EDITABLE_KEYS,
+  FIELD_BY_KEY,
+  SETTING_GROUPS,
+  type SettingField,
+} from "./settings-fields";
 import { findAllSettings, findSettingsByKeys, applySettingChanges } from "./repository";
 
 /** Stored form -> form form. "11368" -> "113.68" for money, unchanged otherwise. */
@@ -40,8 +45,14 @@ function toStoredValue(field: SettingField, submitted: string): string {
   return String(n);
 }
 
+/** The policy texts live in settings too, but are edited on their own page. */
+const POLICY_KEYS = new Set(
+  SETTING_GROUPS.find((g) => g.title === "Policies")?.fields.map((f) => f.key) ?? [],
+);
+
 /** Every setting, keyed, for the form to render from. */
 export async function getSettingsMap(): Promise<Record<string, string>> {
+  await requireAnyPermission(["SETTINGS", "POLICIES"]);
   const rows = await findAllSettings();
   return Object.fromEntries(rows.map((r) => [r.key, r.value]));
 }
@@ -49,7 +60,7 @@ export async function getSettingsMap(): Promise<Record<string, string>> {
 export async function updateSettings(
   submitted: Record<string, string>,
 ): Promise<{ changed: number }> {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
 
   // 1. Validate and convert EVERYTHING before touching the database.
   const wanted: Record<string, string> = {};
@@ -74,6 +85,13 @@ export async function updateSettings(
     .map(([key, value]) => ({ key, value }));
 
   if (changes.length === 0) return { changed: 0 };
+
+  // Permission follows what actually CHANGED, not what the form sent: the
+  // settings page sends every field, including unchanged policy texts.
+  const touchesPolicies = changes.some((c) => POLICY_KEYS.has(c.key));
+  const touchesSettings = changes.some((c) => !POLICY_KEYS.has(c.key));
+  if (touchesPolicies && !can(admin, "POLICIES")) throw new Error("FORBIDDEN");
+  if (touchesSettings && !can(admin, "SETTINGS")) throw new Error("FORBIDDEN");
 
   // 4. Write + audit atomically.
   const beforeJson = Object.fromEntries(

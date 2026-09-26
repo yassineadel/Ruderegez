@@ -1,8 +1,10 @@
 import { getSettingsMap, toFormValue } from "@/modules/admin/service";
 import { SETTING_GROUPS } from "@/modules/admin/settings-fields";
 import SettingsForm from "./settings-form";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 export default async function SettingsPage() {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const stored = await getSettingsMap();
 
   const initial: Record<string, string> = {};

@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth-guards";
+import { requirePermission } from "@/lib/auth-guards";
 import {
   findReviews,
   countReviews,
@@ -8,7 +8,7 @@ import {
 } from "./reviews-repository";
 
 export async function listReviews(filter?: "visible" | "hidden") {
-  await requireAdmin();
+  await requirePermission("REVIEWS");
   const [reviews, counts] = await Promise.all([
     findReviews(filter),
     countReviews(),
@@ -21,7 +21,7 @@ export async function hideReview(input: {
   id: string;
   reason: string;
 }): Promise<{ slug: string }> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("REVIEWS");
 
   const reason = input.reason.trim();
   if (reason.length < 3) throw new Error("REASON_REQUIRED");
@@ -35,7 +35,7 @@ export async function hideReview(input: {
 }
 
 export async function unhideReview(id: string): Promise<{ slug: string }> {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("REVIEWS");
 
   const review = await findReviewById(id);
   if (!review) throw new Error("REVIEW_NOT_FOUND");

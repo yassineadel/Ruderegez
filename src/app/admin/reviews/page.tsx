@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listReviews } from "@/modules/admin/reviews-service";
 import ReviewControls from "./review-controls";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 const FILTERS = [
   { key: undefined, label: "ALL" },
@@ -13,6 +14,7 @@ export default async function AdminReviewsPage({
 }: {
   searchParams: Promise<{ filter?: string }>;
 }) {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const params = await searchParams;
   const filter =
     params.filter === "visible" || params.filter === "hidden"

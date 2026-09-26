@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth-guards";
+import { requirePermission } from "@/lib/auth-guards";
 import { slugify } from "./slugify";
 import {
   findAllCategories,
@@ -17,12 +17,12 @@ import {
 } from "./categories-repository";
 
 export async function listCategories() {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
   return findAllCategories();
 }
 
 export async function addCategory(name: string) {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
 
   const trimmed = name.trim();
   if (trimmed.length < 2) throw new Error("NAME_REQUIRED");
@@ -46,14 +46,14 @@ export async function addCategory(name: string) {
  * break those.
  */
 export async function renameCategory(id: string, name: string) {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
   const trimmed = name.trim();
   if (trimmed.length < 2) throw new Error("NAME_REQUIRED");
   await updateCategory(id, { name: trimmed });
 }
 
 export async function setCategoryActive(id: string, isActive: boolean) {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
   await updateCategory(id, { isActive });
 }
 
@@ -66,7 +66,7 @@ export async function setCategoryActive(id: string, isActive: boolean) {
  * while everything already in it keeps working.
  */
 export async function removeCategory(id: string) {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
 
   const count = await countProductsInCategory(id);
   if (count > 0) throw new Error("CATEGORY_NOT_EMPTY");
@@ -75,7 +75,7 @@ export async function removeCategory(id: string) {
 }
 
 export async function moveCategory(id: string, direction: "up" | "down") {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
 
   const all = await findAllCategories();
   const index = all.findIndex((c) => c.id === id);
@@ -96,7 +96,7 @@ export async function moveCategory(id: string, direction: "up" | "down") {
 
 /** Weight arrives in grams from the form and is stored in milligrams. */
 export async function addCategorySize(typeId: string, label: string, weightG: number) {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
 
   const category = await findCategoryById(typeId);
   if (!category) throw new Error("CATEGORY_NOT_FOUND");
@@ -117,7 +117,7 @@ export async function addCategorySize(typeId: string, label: string, weightG: nu
 }
 
 export async function removeCategorySize(id: string) {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
   await deleteCategorySize(id);
 }
 
@@ -127,7 +127,7 @@ export async function removeCategorySize(id: string) {
  * estimate for new designs in that category.
  */
 export async function setCategoryFactor(id: string, factor: number | null) {
-  await requireAdmin();
+  await requirePermission("CATEGORIES");
 
   if (factor === null) {
     await updateCategory(id, { customFactorBp: null });

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { AdminPermission } from "@/generated/prisma/client";
+import { redirect } from "next/navigation";
 
 // ============================================================================
 //  WHO MAY DO WHAT
@@ -78,4 +79,55 @@ export function can(
   permission: AdminPermission,
 ): boolean {
   return user.role === "ADMIN" || (user.role === "STAFF" && user.permissions.includes(permission));
+}
+
+
+/**
+ * For admin PAGES. Same rule as requirePermission, but instead of throwing
+ * it sends the person to the dashboard with a "no access" notice - a thrown
+ * error would show a generic error page instead.
+ *
+ * Pages use this; services and actions keep using requirePermission. Both
+ * matter: the page check is for a clean screen, the service check is the
+ * one that actually protects the data.
+ */
+export async function requirePagePermission(
+  permission: AdminPermission | AdminPermission[],
+) {
+  const list = Array.isArray(permission) ? permission : [permission];
+  try {
+    return await requireAnyPermission(list);
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "";
+    if (code === "UNAUTHORIZED") redirect("/sign-in?next=/admin");
+    redirect("/admin?denied=1");
+  }
+}
+
+/** For showing the "Admin" link in the store header. Never throws. */
+export async function hasAdminAccess(userId: string | undefined): Promise<boolean> {
+  if (!userId) return false;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, permissions: true, isBlocked: true },
+  });
+  if (!user || user.isBlocked) return false;
+  return user.role === "ADMIN" || (user.role === "STAFF" && user.permissions.length > 0);
+}
+
+/**
+ * Non-throwing check by id, for customer pages that staff may also open
+ * (an order, a custom request). Reads the database, like every check here.
+ */
+export async function userHasAnyPermission(
+  userId: string | undefined,
+  permissions: AdminPermission[],
+): Promise<boolean> {
+  if (!userId) return false;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, permissions: true, isBlocked: true },
+  });
+  if (!user || user.isBlocked) return false;
+  return permissions.some((p) => can(user, p));
 }

@@ -5,12 +5,14 @@ import {
   getProductFormOptions,
 } from "@/modules/admin/products-service";
 import ProductForm from "../product-form";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 export default async function EditProductPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const { id } = await params;
   const [product, { types, settings }] = await Promise.all([
     getAdminProduct(id),

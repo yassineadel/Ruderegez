@@ -1,10 +1,12 @@
 import { getSettingsMap, toFormValue } from "@/modules/admin/service";
 import { SETTING_GROUPS } from "@/modules/admin/settings-fields";
 import SettingsForm from "../settings/settings-form";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 const GROUP = "Policies";
 
 export default async function PoliciesPage() {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const stored = await getSettingsMap();
   const group = SETTING_GROUPS.find((g) => g.title === GROUP);
 

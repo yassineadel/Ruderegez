@@ -1,7 +1,9 @@
 import { listCategories } from "@/modules/admin/categories-service";
 import CategoriesManager from "./categories-manager";
+import { requirePagePermission } from "@/lib/auth-guards";
 
 export default async function AdminCategoriesPage() {
+  await requirePagePermission(["ORDERS", "PAYMENTS"]);
   const categories = await listCategories();
 
   return (

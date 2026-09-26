@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth-guards";
+import { requirePermission } from "@/lib/auth-guards";
 import { getPricingSettings } from "@/lib/settings";
 import { calculateitemprice } from "@/modules/pricing/calc";
 import type { Minor } from "@/lib/money";
@@ -25,7 +25,7 @@ const ALLOWED: Record<CustomRequestStatus, CustomRequestStatus[]> = {
 };
 
 export async function listCustomRequests(status?: CustomRequestStatus) {
-  await requireAdmin();
+  await requirePermission("CUSTOM_REQUESTS");
   const [requests, counts] = await Promise.all([
     findCustomRequests(status),
     countCustomByStatus(),
@@ -34,12 +34,12 @@ export async function listCustomRequests(status?: CustomRequestStatus) {
 }
 
 export async function getCustomRequest(reference: string) {
-  await requireAdmin();
+  await requirePermission("CUSTOM_REQUESTS");
   return findCustomRequest(reference);
 }
 
 export async function startReview(reference: string) {
-  await requireAdmin();
+  await requirePermission("CUSTOM_REQUESTS");
   const request = await findCustomRequest(reference);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
   if (request.status !== "SUBMITTED") throw new Error("INVALID_TRANSITION");
@@ -60,7 +60,7 @@ export async function quoteRequest(input: {
   leadTimeDays: number;
   note?: string;
 }) {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("CUSTOM_REQUESTS");
 
   const request = await findCustomRequest(input.reference);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
@@ -109,7 +109,7 @@ export async function rejectCustomRequest(input: {
   reference: string;
   reason: string;
 }) {
-  const admin = await requireAdmin();
+  const admin = await requirePermission("CUSTOM_REQUESTS");
 
   const request = await findCustomRequest(input.reference);
   if (!request) throw new Error("REQUEST_NOT_FOUND");
