@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getPricingSettings } from "@/lib/settings";
 import { formatEGP } from "@/lib/money";
+import SilverRatePanel from "./silver-rate-panel";
 
 export default async function AdminDashboard() {
   const p = await getPricingSettings();
@@ -12,8 +13,10 @@ export default async function AdminDashboard() {
         The values currently used to price every item in the store.
       </p>
 
+      {/* Updated automatically every 5 minutes - see the panel for details. */}
+      <SilverRatePanel />
+
       <div className="grid gap-px bg-line border border-line sm:grid-cols-2 lg:grid-cols-3 max-w-4xl">
-        <Stat label="Silver rate" value={`${formatEGP(p.silverRatePerGram)} / g`} />
         <Stat label="Deposit - standard" value={`${p.depositPercent}%`} />
         <Stat label="Deposit - custom" value={`${p.depositPercentCustom}%`} />
         <Stat label="Delivery fee" value={formatEGP(p.deliveryFee)} />

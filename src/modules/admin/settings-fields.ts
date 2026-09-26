@@ -33,7 +33,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
         key: "silverRatePerGramMinor",
         label: "Silver rate per gram",
         kind: "money",
-        help: "EGP per gram. The single most important number in the store.",
+        help: "EGP per gram of pure silver. Updated automatically every 5 minutes from the international price - a value typed here is replaced at the next update if the market has moved 0.5% or more. See the Dashboard for the live status.",
         min: 1,
         max: 10000,
       },
