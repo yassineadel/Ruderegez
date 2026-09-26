@@ -50,14 +50,18 @@ export function createOrderTransaction(data: {
   items: Omit<Prisma.OrderItemCreateManyInput, "orderId">[];
   cartId: string;
   proof: { screenshotUrl: string; amountMinor: number; referenceNumber?: string };
+  checkoutSessionId: string;
 }) {
   return prisma.$transaction(async (tx) => {
-    const order = await tx.order.create({ data: data.order });
-
-    await tx.orderItem.createMany({
-      data: data.items.map((i) => ({ ...i, orderId: order.id })),
+    // Claim the price hold FIRST. Only one request can flip usedAt from null,
+    // so a double-click or a second tab can't place two orders from one hold.
+    const claimed = await tx.checkoutSession.updateMany({
+      where: { id: data.checkoutSessionId, usedAt: null },
+      data: { usedAt: new Date() },
     });
+    if (claimed.count === 0) throw new Error("SESSION_INVALID");
 
+    const order = await tx.order.create({ data: data.order });
     await tx.paymentProof.create({
       data: {
         orderId: order.id,
@@ -126,4 +130,51 @@ export function createPaymentProof(data: {
       },
     }),
   ]);
+}
+
+
+// ============================================================================
+//  CHECKOUT SESSIONS  (price hold)
+// ============================================================================
+
+export function findCheckoutSession(id: string) {
+  return prisma.checkoutSession.findUnique({ where: { id } });
+}
+
+/** A still-valid hold for this exact bag - so a page refresh keeps the timer. */
+export function findReusableCheckoutSession(userId: string, cartSignature: string) {
+  return prisma.checkoutSession.findFirst({
+    where: {
+      userId,
+      cartSignature,
+      usedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/**
+ * Starts a new hold and clears this customer's old unused ones - they can
+ * only ever have one checkout in progress, and old rows would just pile up.
+ */
+export function replaceCheckoutSession(data: {
+  userId: string;
+  rateMinor: number;
+  cartSignature: string;
+  expiresAt: Date;
+}) {
+  return prisma.$transaction(async (tx) => {
+    await tx.checkoutSession.deleteMany({
+      where: { userId: data.userId, usedAt: null },
+    });
+    return tx.checkoutSession.create({ data });
+  });
+}
+
+export function lockCheckoutSessionRow(id: string, expiresAt: Date) {
+  return prisma.checkoutSession.update({
+    where: { id },
+    data: { receiptLockedAt: new Date(), expiresAt },
+  });
 }

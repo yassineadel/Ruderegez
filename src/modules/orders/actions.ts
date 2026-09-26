@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import type { PaymentMethod } from "@/generated/prisma/client";
-import { placeOrder,submitPaymentProof } from "./service";
+import { placeOrder, submitPaymentProof } from "./service";
+import { lockCheckoutSession } from "./checkout-session";
 import { toOrderMessage, type Result } from "./errors";
 
 export async function placeOrderAction(input: {
@@ -12,7 +13,7 @@ export async function placeOrderAction(input: {
   addressCity: string;
   addressNotes?: string;
   paymentMethod: PaymentMethod;
-  expectedTotalMinor: number;
+  checkoutSessionId: string;
   paymentScreenshotUrl: string;
   paymentReferenceNumber?: string;
 }): Promise<Result<{ reference: string }>> {
@@ -42,6 +43,18 @@ export async function submitPaymentProofAction(input: {
   } catch (err) {
     const code = err instanceof Error ? err.message : "UNKNOWN";
     if (code === "UNKNOWN") console.error("[submitPaymentProofAction]", err);
+    return { ok: false, error: toOrderMessage(code) };
+  }
+}
+
+/** Receipt uploaded - extend the price hold so they can place the order. */
+export async function lockCheckoutSessionAction(sessionId: string): Promise<Result> {
+  try {
+    await lockCheckoutSession(sessionId);
+    return { ok: true };
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "UNKNOWN";
+    if (code === "UNKNOWN") console.error("[lockCheckoutSessionAction]", err);
     return { ok: false, error: toOrderMessage(code) };
   }
 }

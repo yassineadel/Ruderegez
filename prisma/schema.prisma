@@ -133,8 +133,9 @@ model User {
   sessions       Session[]
   cart           Cart?
   orders         Order[]
-  customRequests CustomRequest[]
-  auditLogs      AuditLog[]      @relation("AuditActor")
+    customRequests   CustomRequest[]
+  checkoutSessions CheckoutSession[]
+  auditLogs        AuditLog[]      @relation("AuditActor")
 
   reviews        Review[]
   hiddenReviews  Review[]        @relation("ReviewHiddenBy")
@@ -662,6 +663,36 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+/// A price hold for one visit to checkout.
+///
+/// Opening checkout locks the silver rate for 5 minutes - long enough to
+/// transfer the money and upload the receipt. Uploading the receipt extends
+/// the hold by 15 minutes to place the order. Whatever the rate does in the
+/// meantime, the order is priced at `rateMinor`.
+///
+/// `cartSignature` pins the hold to the exact bag it was opened for: add or
+/// remove anything and the hold no longer applies.
+model CheckoutSession {
+  id     String @id @default(cuid())
+  userId String
+
+  /// The silver rate this checkout is priced at, piastres per gram.
+  rateMinor     Int
+  cartSignature String
+
+  expiresAt       DateTime
+  /// Set when the receipt is uploaded - that is what earns the extension.
+  receiptLockedAt DateTime?
+  /// Set when an order is placed from it. A session places ONE order.
+  usedAt          DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
 }
 
 /// FR-102 - every status change records WHO made it and WHEN.

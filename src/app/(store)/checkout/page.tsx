@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { getCartView } from "@/modules/cart/service";
+import { openCheckoutSession } from "@/modules/orders/checkout-session";
 import { getPricingSettings, getSetting } from "@/lib/settings";
 import CheckoutForm from "./checkout-form";
 
@@ -9,7 +9,7 @@ export default async function CheckoutPage() {
   if (!session?.user) redirect("/sign-in?next=/checkout");
 
   const [
-    cart,
+    checkout,
     settings,
     city,
     notice,
@@ -20,7 +20,8 @@ export default async function CheckoutPage() {
     instapayName,
     vodafone,
   ] = await Promise.all([
-    getCartView(),
+    // Opens (or reuses) the price hold and prices the bag at the held rate.
+    openCheckoutSession(),
     getPricingSettings(),
     getSetting("deliveryCityAllowed", "Cairo"),
     getSetting("checkoutNotice"),
@@ -32,7 +33,8 @@ export default async function CheckoutPage() {
     getSetting("vodafoneCashNumber"),
   ]);
 
-  if (cart.lines.length === 0) redirect("/cart");
+  if (!checkout) redirect("/cart");
+  const { cart, session: hold } = checkout;
 
   return (
     <div className="px-6 lg:px-12 py-16 lg:py-24">
@@ -53,6 +55,7 @@ export default async function CheckoutPage() {
         storeAddress={storeAddress}
         storeMapLink={storeMapLink.startsWith("https://") ? storeMapLink : null}
         payTo={{ instapay, instapayName, vodafone }}
+        session={hold}
       />
     </div>
   );

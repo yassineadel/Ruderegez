@@ -2,6 +2,7 @@ import type { Minor } from "@/lib/money";
 import { getPricingSettings } from "@/lib/settings";
 import { priceProduct } from "@/modules/pricing/price-product";
 import { prisma } from "@/lib/db";
+import { createHash } from "crypto";
 import { findCurrentCart, getOrCreateCart } from "./cart-identity";
 import {
   findCartWithItems,
@@ -42,15 +43,24 @@ const EMPTY: CartView = { lines: [], itemCount: 0, subtotalMinor: 0 as Minor };
  * they added the item. When the two differ the line is flagged so checkout
  * can say so (BRD 5.5).
  */
-export async function getCartView(): Promise<CartView> {
+export async function getCartView(
+  options: {
+    /** Price at this rate instead of the live one - checkout's price hold. */
+    silverRateOverride?: Minor;
+  } = {},
+): Promise<CartView> {
   const cart = await findCurrentCart();
   if (!cart) return EMPTY;
 
-  const [full, settings] = await Promise.all([
+  const [full, liveSettings] = await Promise.all([
     findCartWithItems(cart.id),
     getPricingSettings(),
   ]);
   if (!full || full.items.length === 0) return EMPTY;
+
+  const settings = options.silverRateOverride
+    ? { ...liveSettings, silverRatePerGram: options.silverRateOverride }
+    : liveSettings;
 
   const lines: CartLine[] = [];
 
@@ -106,6 +116,16 @@ export async function getCartView(): Promise<CartView> {
     itemCount: lines.reduce((n, l) => n + l.quantity, 0),
     subtotalMinor: lines.reduce((n, l) => n + l.lineTotalMinor, 0) as Minor,
   };
+}
+
+
+/**
+ * A fingerprint of WHAT is in the bag - lines and quantities, not prices.
+ * Checkout's price hold is tied to it: change the bag and the hold is void.
+ */
+export function cartSignature(view: CartView): string {
+  const parts = view.lines.map((l) => `${l.id}:${l.quantity}`).sort();
+  return createHash("sha256").update(parts.join("|")).digest("hex");
 }
 
 /** Just the number for the header badge. */

@@ -8,6 +8,9 @@ export const ORDER_ERRORS = {
   REFERENCE_COLLISION: "REFERENCE_COLLISION",
   NOT_SIGNED_IN: "NOT_SIGNED_IN",
   PROOF_REQUIRED: "PROOF_REQUIRED",
+  SESSION_EXPIRED: "SESSION_EXPIRED",
+  SESSION_INVALID: "SESSION_INVALID",
+  CART_CHANGED: "CART_CHANGED",
 } as const;
 
 const MESSAGES: Record<string, string> = {
@@ -25,6 +28,9 @@ const MESSAGES: Record<string, string> = {
     ORDER_NOT_FOUND: "We couldn't find that order.",
   ALREADY_SUBMITTED: "You've already sent proof for this order. We're checking it now.",
   INVALID_UPLOAD: "That upload didn't work. Please try again.",
+    SESSION_EXPIRED: "SESSION_EXPIRED",
+  SESSION_INVALID: "SESSION_INVALID",
+  CART_CHANGED: "CART_CHANGED",
 };
 
 export function toOrderMessage(code: string): string {

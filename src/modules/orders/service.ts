@@ -6,6 +6,7 @@ import { findCurrentCart } from "@/modules/cart/cart-identity";
 import { prisma } from "@/lib/db";
 import type { PaymentMethod } from "@/generated/prisma/client";
 import { generateOrderReference } from "./reference";
+import { assertUsableSession } from "./checkout-session";
 import {
   createOrderTransaction,
   referenceExists,
@@ -20,20 +21,19 @@ export interface PlaceOrderInput {
   addressCity: string;
   addressNotes?: string;
   paymentMethod: PaymentMethod;
-  /** The total the customer was shown. If it no longer matches, we stop. */
-  expectedTotalMinor: number;
-   paymentScreenshotUrl: string;
+  /** The price hold this order is placed from - it fixes the silver rate. */
+  checkoutSessionId: string;
+  paymentScreenshotUrl: string;
   paymentReferenceNumber?: string;
 }
 
 /**
  * Creates an order from the current cart.
  *
- * The prices used are the ones the CUSTOMER WAS JUST SHOWN - getCartView
- * computes them from the live rate, and the cart page rendered from exactly
- * this. `expectedTotalMinor` guards the seconds between page load and submit:
- * if the rate moved in that window we stop and make them confirm rather than
- * charging a number they never saw.
+ * The prices used are the ones the CUSTOMER WAS JUST SHOWN. Checkout holds
+ * the silver rate in a CheckoutSession (5 minutes to upload the receipt, 15
+ * more to order), and the bag is priced here at that held rate - not the
+ * live one. The customer paid a number; this charges exactly that number.
  *
  * Everything is then FROZEN. The rate, the weights, the factors, and the
  * deposit percent are all snapshotted, so this order can be recomputed and
@@ -42,12 +42,19 @@ export interface PlaceOrderInput {
 export async function placeOrder(input: PlaceOrderInput) {
   const user = await requireUser();
 
-  const [cart, cartRow, settings, storeAddress] = await Promise.all([
-    getCartView(),
+  // The hold decides the rate. Checked first: an expired or foreign session
+  // stops everything before any other work.
+  const { rateMinor } = await assertUsableSession(input.checkoutSessionId, user.id);
+
+  const [cart, cartRow, liveSettings, storeAddress] = await Promise.all([
+    getCartView({ silverRateOverride: rateMinor }),
     findCurrentCart(),
     getPricingSettings(),
     getSetting("storeAddress"),
   ]);
+
+  // Everything below - line prices, snapshots - uses the HELD rate.
+  const settings = { ...liveSettings, silverRatePerGram: rateMinor };
 
   if (!cartRow || cart.lines.length === 0) throw new Error("EMPTY_CART");
 
@@ -87,11 +94,6 @@ export async function placeOrder(input: PlaceOrderInput) {
   // Nothing is delivered on a collection order, so nothing is charged for it.
   const deliveryFeeMinor = isPickup ? 0 : settings.deliveryFee;
   const totalMinor = subtotalMinor + deliveryFeeMinor;
-
-  // The rate moved between render and submit.
-  if (totalMinor !== input.expectedTotalMinor) {
-    throw new Error("PRICE_MOVED");
-  }
 
   const depositPercent = settings.depositPercent;
   const depositDueMinor =
@@ -198,7 +200,8 @@ export async function placeOrder(input: PlaceOrderInput) {
     order: {
       reference,
       user: { connect: { id: user.id } },
-       status: "PAYMENT_UNDER_REVIEW",  
+      // Paid and receipt attached - it goes straight to the admin's queue.
+      status: "PAYMENT_UNDER_REVIEW",
 
       customerName: input.customerName.trim(),
       customerPhone: phone,
@@ -221,13 +224,14 @@ export async function placeOrder(input: PlaceOrderInput) {
 
       paymentMethod: input.paymentMethod,
     },
-        items,
+    items,
     cartId: cartRow.id,
     proof: {
       screenshotUrl: input.paymentScreenshotUrl,
       amountMinor: depositDueMinor,
       referenceNumber: input.paymentReferenceNumber?.trim() || undefined,
     },
+    checkoutSessionId: input.checkoutSessionId,
   });
 
   return { reference: order.reference, id: order.id };
