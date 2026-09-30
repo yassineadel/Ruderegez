@@ -230,6 +230,14 @@ export default async function OrderPage({
               <dt className="text-ink-soft">Subtotal</dt>
               <dd>{formatEGP(order.subtotalMinor as Minor)}</dd>
             </div>
+            {order.discountMinor > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-ink-soft">
+                  Promo {order.promoCodeSnapshot} ({order.promoPercentSnapshot}%)
+                </dt>
+                <dd>−{formatEGP(order.discountMinor as Minor)}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-ink-soft">Delivery</dt>
               <dd>{formatEGP(order.deliveryFeeMinor as Minor)}</dd>

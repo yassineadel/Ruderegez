@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import type { PaymentMethod } from "@/generated/prisma/client";
 import { placeOrder, submitPaymentProof } from "./service";
-import { lockCheckoutSession } from "./checkout-session";
+import {
+  lockCheckoutSession,
+  applyPromoToCheckout,
+  removePromoFromCheckout,
+} from "./checkout-session";
 import { toOrderMessage, type Result } from "./errors";
 
 export async function placeOrderAction(input: {
@@ -55,6 +59,34 @@ export async function lockCheckoutSessionAction(sessionId: string): Promise<Resu
   } catch (err) {
     const code = err instanceof Error ? err.message : "UNKNOWN";
     if (code === "UNKNOWN") console.error("[lockCheckoutSessionAction]", err);
+    return { ok: false, error: toOrderMessage(code) };
+  }
+}
+/** Checkout: apply a promo code to the price hold. */
+export async function applyPromoAction(input: {
+  sessionId: string;
+  code: string;
+}): Promise<Result> {
+  try {
+    await applyPromoToCheckout(input.sessionId, input.code);
+    revalidatePath("/checkout");
+    return { ok: true };
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "UNKNOWN";
+    if (code === "UNKNOWN") console.error("[applyPromoAction]", err);
+    return { ok: false, error: toOrderMessage(code) };
+  }
+}
+
+/** Checkout: take the promo code off the price hold. */
+export async function removePromoAction(sessionId: string): Promise<Result> {
+  try {
+    await removePromoFromCheckout(sessionId);
+    revalidatePath("/checkout");
+    return { ok: true };
+  } catch (err) {
+    const code = err instanceof Error ? err.message : "UNKNOWN";
+    if (code === "UNKNOWN") console.error("[removePromoAction]", err);
     return { ok: false, error: toOrderMessage(code) };
   }
 }

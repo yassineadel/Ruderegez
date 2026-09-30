@@ -1,3 +1,5 @@
+import { PROMO_MESSAGES } from "@/modules/promos/errors";
+
 export const ORDER_ERRORS = {
   EMPTY_CART: "EMPTY_CART",
   INVALID_ADDRESS: "INVALID_ADDRESS",
@@ -34,7 +36,8 @@ const MESSAGES: Record<string, string> = {
 };
 
 export function toOrderMessage(code: string): string {
-  return MESSAGES[code] ?? "Something went wrong. Please try again.";
+  // Promo errors reach checkout through the orders actions too.
+  return MESSAGES[code] ?? PROMO_MESSAGES[code] ?? "Something went wrong. Please try again.";
 }
 
 export type Result<T = undefined> =

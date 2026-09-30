@@ -5,8 +5,10 @@ import { getCartView } from "@/modules/cart/service";
 import { findCurrentCart } from "@/modules/cart/cart-identity";
 import { prisma } from "@/lib/db";
 import type { PaymentMethod } from "@/generated/prisma/client";
+import { promoDiscount } from "@/modules/promos/calc";
 import { generateOrderReference } from "./reference";
 import { assertUsableSession } from "./checkout-session";
+import { checkoutTotals } from "./totals";
 import {
   createOrderTransaction,
   referenceExists,
@@ -42,9 +44,12 @@ export interface PlaceOrderInput {
 export async function placeOrder(input: PlaceOrderInput) {
   const user = await requireUser();
 
-  // The hold decides the rate. Checked first: an expired or foreign session
-  // stops everything before any other work.
-  const { rateMinor } = await assertUsableSession(input.checkoutSessionId, user.id);
+  // The hold decides the rate AND the promo. Checked first: an expired or
+  // foreign session stops everything before any other work.
+  const { rateMinor, promo } = await assertUsableSession(
+    input.checkoutSessionId,
+    user.id,
+  );
 
   const [cart, cartRow, liveSettings, storeAddress] = await Promise.all([
     getCartView({ silverRateOverride: rateMinor }),
@@ -90,17 +95,27 @@ export async function placeOrder(input: PlaceOrderInput) {
   }
 
   // --- money ---------------------------------------------------------------
-  const subtotalMinor = cart.subtotalMinor;
-  // Nothing is delivered on a collection order, so nothing is charged for it.
-  const deliveryFeeMinor = isPickup ? 0 : settings.deliveryFee;
-  const totalMinor = subtotalMinor + deliveryFeeMinor;
-
+  // The same function the checkout page used to show the amount to transfer,
+  // so the order charges exactly what the customer was told to send.
+  // The promo comes off every line (catalog and custom), never the delivery.
   const depositPercent = settings.depositPercent;
-  const depositDueMinor =
-    input.paymentMethod === "FULL_INSTAPAY"
-      ? totalMinor
-      : Math.round((totalMinor * depositPercent) / 100);
-  const balanceDueMinor = totalMinor - depositDueMinor;
+  const {
+    subtotalMinor,
+    discountMinor,
+    deliveryFeeMinor,
+    totalMinor,
+    depositDueMinor,
+    balanceDueMinor,
+  } = checkoutTotals({
+    subtotalMinor: cart.subtotalMinor,
+    discountMinor: promo
+      ? promoDiscount(cart.subtotalMinor, promo.percentOff)
+      : (0 as Minor),
+    // Nothing is delivered on a collection order, so nothing is charged for it.
+    deliveryFeeMinor: (isPickup ? 0 : settings.deliveryFee) as Minor,
+    payInFull: input.paymentMethod === "FULL_INSTAPAY",
+    depositPercent,
+  });
 
   // --- snapshot every line -------------------------------------------------
   // Two kinds of line, snapshotted from two different places. A catalog line
@@ -218,6 +233,10 @@ export async function placeOrder(input: PlaceOrderInput) {
       deliveryFeeMinor,
       totalMinor,
 
+      promoCodeSnapshot: promo?.code ?? null,
+      promoPercentSnapshot: promo?.percentOff ?? null,
+      discountMinor,
+
       depositPercentSnapshot: depositPercent,
       depositDueMinor,
       balanceDueMinor,
@@ -232,6 +251,9 @@ export async function placeOrder(input: PlaceOrderInput) {
       referenceNumber: input.paymentReferenceNumber?.trim() || undefined,
     },
     checkoutSessionId: input.checkoutSessionId,
+    promo: promo
+      ? { promoCodeId: promo.id, userId: user.id, discountMinor }
+      : undefined,
   });
 
   return { reference: order.reference, id: order.id };

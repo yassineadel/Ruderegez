@@ -11,8 +11,11 @@ import type { CartLine } from "@/modules/cart/service";
 import {
   placeOrderAction,
   lockCheckoutSessionAction,
+  applyPromoAction,
+  removePromoAction,
 } from "@/modules/orders/actions";
 import type { CheckoutSessionView } from "@/modules/orders/checkout-session";
+import { checkoutTotals } from "@/modules/orders/totals";
 import ConfirmModal from "./confirm-modal";
 import TermsNotice from "./terms-notice";
 
@@ -37,6 +40,7 @@ export default function CheckoutForm({
   storeMapLink,
   payTo,
   session,
+  promoNotice,
 }: {
   lines: CartLine[];
   subtotalMinor: Minor;
@@ -52,6 +56,8 @@ export default function CheckoutForm({
   payTo: { instapay: string; instapayName: string; vodafone: string };
   /** The price hold - every number on this page is priced at its rate. */
   session: CheckoutSessionView;
+  /** The previous hold's promo couldn't be carried over - say why. */
+  promoNotice: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -72,7 +78,7 @@ export default function CheckoutForm({
   // ---------------- price hold ----------------
   const secondsLeft = useCountdown(session.expiresAt);
   const expired = secondsLeft <= 0;
-  const [holdNotice, setHoldNotice] = useState<string | null>(null);
+  const [holdNotice, setHoldNotice] = useState<string | null>(promoNotice);
 
   // Time ran out: ask the server again. It opens a new hold at today's rate
   // and the page re-renders with the new prices. Form fields keep their
@@ -95,9 +101,10 @@ export default function CheckoutForm({
     setReceiptUrl("");
     setPayRef("");
     setHoldNotice(
-      "Your price hold ran out, so the prices have been refreshed at today's silver rate. Please check the amount before transferring.",
+      "Your price hold ran out, so the prices have been refreshed at today's silver rate. Please check the amount before transferring." +
+        (promoNotice ? ` ${promoNotice}` : ""),
     );
-  }, [session.id]);
+  }, [session.id, promoNotice]);
 
   /** Receipt uploaded: lock the price for 15 more minutes. */
   async function handleReceipt(url: string) {
@@ -117,14 +124,22 @@ export default function CheckoutForm({
   }
 
   const isPickup = method === "DEPOSIT_THEN_PICKUP";
-  // Must match the server: no delivery fee on a collection order.
-  const deliveryMinor = (isPickup ? 0 : deliveryFeeMinor) as Minor;
-  const total = (subtotalMinor + deliveryMinor) as Minor;
-  const deposit =
-    method === "FULL_INSTAPAY"
-      ? total
-      : (Math.round((total * depositPercent) / 100) as Minor);
-  const balance = (total - deposit) as Minor;
+  // The same function placeOrder uses, so the amount shown is the amount
+  // charged. No delivery fee on a collection order; the promo comes off the
+  // subtotal only.
+  const {
+    discountMinor: discount,
+    deliveryFeeMinor: deliveryMinor,
+    totalMinor: total,
+    depositDueMinor: deposit,
+    balanceDueMinor: balance,
+  } = checkoutTotals({
+    subtotalMinor,
+    discountMinor: (session.promo?.discountMinor ?? 0) as Minor,
+    deliveryFeeMinor: (isPickup ? 0 : deliveryFeeMinor) as Minor,
+    payInFull: method === "FULL_INSTAPAY",
+    depositPercent,
+  });
 
   const field =
     "w-full bg-transparent border border-line px-4 py-3.5 text-sm " +
@@ -272,6 +287,21 @@ export default function CheckoutForm({
           )}
         </div>
 
+        {/* ---------------- promo code ---------------- */}
+        {/* Before the transfer on purpose: the code changes the amount to send. */}
+        <PromoField
+          sessionId={session.id}
+          promo={session.promo}
+          locked={session.locked}
+          disabled={expired}
+          onChanged={() => {
+            // A receipt only matches the amount it was sent for.
+            setReceiptUrl("");
+            setHoldNotice(null);
+            router.refresh();
+          }}
+        />
+
         {/* ---------------- transfer + receipt ---------------- */}
         <h2 className="font-display text-2xl font-light mt-12 mb-2">
           Send {formatEGP(deposit)}
@@ -351,6 +381,14 @@ export default function CheckoutForm({
             <dt className="text-ink-soft">Subtotal</dt>
             <dd>{formatEGP(subtotalMinor)}</dd>
           </div>
+          {session.promo && discount > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-ink-soft">
+                Promo {session.promo.code} ({session.promo.percentOff}%)
+              </dt>
+              <dd>−{formatEGP(discount)}</dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-ink-soft">Delivery</dt>
             <dd>{isPickup ? "Collection - free" : formatEGP(deliveryMinor)}</dd>
@@ -422,6 +460,109 @@ export default function CheckoutForm({
         leadTimeDays={leadTimeDays}
         notice={notice}
       />
+    </div>
+  );
+}
+
+// ============================================================================
+//  PROMO CODE
+// ============================================================================
+
+function PromoField({
+  sessionId,
+  promo,
+  locked,
+  disabled,
+  onChanged,
+}: {
+  sessionId: string;
+  promo: CheckoutSessionView["promo"];
+  locked: boolean;
+  disabled: boolean;
+  onChanged: () => void;
+}) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
+    setError(null);
+    startTransition(async () => {
+      const result = await fn();
+      if (!result.ok) {
+        setError(result.error ?? "Something went wrong.");
+        return;
+      }
+      setCode("");
+      onChanged();
+    });
+  }
+
+  // Receipt uploaded: the amount is fixed, so the code is too.
+  if (locked) {
+    if (!promo) return null;
+    return (
+      <p className="mt-12 text-sm border border-line p-4">
+        Promo <span className="font-mono">{promo.code}</span> applied -{" "}
+        {promo.percentOff}% off your pieces.
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-12">
+      <h2 className="font-display text-2xl font-light mb-2">Promo code</h2>
+      <p className="text-xs text-ink-soft mb-4 leading-relaxed">
+        Add it before you transfer - it changes the amount to send.
+      </p>
+
+      {promo ? (
+        <div className="border border-ink p-4 flex items-center justify-between gap-4 text-sm">
+          <p>
+            <span className="font-mono">{promo.code}</span> - {promo.percentOff}% off
+            your pieces
+          </p>
+          <button
+            type="button"
+            onClick={() => run(() => removePromoAction(sessionId))}
+            disabled={pending || disabled}
+            className="text-xs text-ink-soft hover:text-ink underline underline-offset-4 disabled:opacity-40"
+          >
+            {pending ? "Removing…" : "Remove"}
+          </button>
+        </div>
+      ) : (
+        <form
+          className="flex gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (code.trim()) run(() => applyPromoAction({ sessionId, code }));
+          }}
+        >
+          <input
+            className={
+              "flex-1 min-w-0 bg-transparent border border-line px-4 py-3.5 text-sm uppercase " +
+              "placeholder:normal-case placeholder:text-ink-soft focus:outline-none focus:border-ink transition-colors"
+            }
+            placeholder="Enter code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            autoCapitalize="characters"
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={24}
+          />
+          <button
+            type="submit"
+            disabled={pending || disabled || !code.trim()}
+            className="border border-ink px-6 text-xs tracking-[0.2em] disabled:opacity-40 hover:bg-ink hover:text-bone transition-colors"
+          >
+            {pending ? "…" : "APPLY"}
+          </button>
+        </form>
+      )}
+
+      {error && <p className="mt-3 text-sm text-red-800">{error}</p>}
     </div>
   );
 }

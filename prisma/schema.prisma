@@ -53,6 +53,7 @@ enum AdminPermission {
   POLICIES
   SETTINGS         // every field on the settings page
   SILVER_RATE      // "Update now", approve or dismiss held rates
+  PROMOS           // create, switch off and delete promo codes
 }
 
 /// BRD 5.3 - audience is one of two independent category dimensions.
@@ -613,6 +614,14 @@ model Order {
   depositDueMinor        Int
   balanceDueMinor        Int
 
+  // --- PROMO SNAPSHOT ------------------------------------------------------
+  /// The code and percent as they were when the order was placed. Editing or
+  /// deleting the promo later never changes this order. Null = no promo.
+  /// totalMinor = subtotalMinor - discountMinor + deliveryFeeMinor
+  promoCodeSnapshot    String?
+  promoPercentSnapshot Int?
+  discountMinor        Int     @default(0)
+
   paymentMethod PaymentMethod
 
   /// BRD 7.2 - the 20% weight tolerance. Set true only in the rare
@@ -627,6 +636,7 @@ model Order {
   items         OrderItem[]
   statusEvents  OrderStatusEvent[]
   paymentProofs PaymentProof[]
+  promoRedemption PromoRedemption?
   user          User               @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
@@ -719,7 +729,15 @@ model CheckoutSession {
   /// Set when an order is placed from it. A session places ONE order.
   usedAt          DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// The promo applied to this checkout. It is held exactly like the rate:
+  /// once applied, this hold honours it until the hold ends, even if the
+  /// code is switched off or reaches its limit in the meantime - the
+  /// customer may already have transferred the discounted amount.
+  /// It can only be changed before the receipt is uploaded.
+  promoCodeId String?
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promoCode PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -934,12 +952,68 @@ model Review {
 }
 
 // =============================================================================
-// DELIBERATELY NOT IN V1
+// PROMO CODES
 // =============================================================================
-//
-//
-//   DiscountCode    - cut to 1.1. Not needed to take money.
-//
-// Adding a table later is a migration, not a redesign. That is precisely
-// why these are safe to defer and the snapshot decisions above are not.
-// =============================================================================
+
+/// A percentage-off code created in the admin panel.
+///
+/// Rules (enforced in src/modules/promos/service.ts):
+///   - one code per order, applied at checkout, before the transfer
+///   - the discount is a percent of the SUBTOTAL (every line, catalog and
+///     custom) - never of the delivery fee
+///   - discount = floor(subtotal * percentOff / 100), in piastres
+///   - a code that has been used is switched off, never deleted, so past
+///     redemptions keep pointing at it
+model PromoCode {
+  id   String @id @default(cuid())
+  /// Stored upper-case, letters, digits, - and _ only. "EID25"
+  code String @unique
+
+  /// 1 to 90. Capped below 100 so no one makes a free-order code by mistake.
+  percentOff Int
+
+  isActive  Boolean   @default(true)
+  /// Both optional. Null startsAt = usable now, null expiresAt = no end.
+  startsAt  DateTime?
+  expiresAt DateTime?
+
+  /// Null = unlimited.
+  maxUses            Int?
+  maxUsesPerCustomer Int?
+  /// Null = no minimum. Compared with the subtotal before the discount.
+  minSubtotalMinor   Int?
+
+  /// Orders placed with this code. Kept on the row so the limit check is a
+  /// single read; PromoRedemption is the full record.
+  usedCount Int @default(0)
+
+  createdByUserId String?
+
+  redemptions      PromoRedemption[]
+  checkoutSessions CheckoutSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+/// One row per order placed with a promo. This is what the per-customer
+/// limit counts, and the admin's history of who used what.
+model PromoRedemption {
+  id          String @id @default(cuid())
+  promoCodeId String
+  orderId     String @unique
+  userId      String
+
+  discountMinor Int
+
+  /// Restrict: a code with redemptions can't be deleted, only switched off.
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Restrict)
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([promoCodeId, userId])
+}

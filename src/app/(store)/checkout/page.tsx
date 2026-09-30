@@ -34,7 +34,7 @@ export default async function CheckoutPage() {
   ]);
 
   if (!checkout) redirect("/cart");
-  const { cart, session: hold } = checkout;
+  const { cart, session: hold, promoNotice } = checkout;
 
   return (
     <div className="px-6 lg:px-12 py-16 lg:py-24">
@@ -56,6 +56,7 @@ export default async function CheckoutPage() {
         storeMapLink={storeMapLink.startsWith("https://") ? storeMapLink : null}
         payTo={{ instapay, instapayName, vodafone }}
         session={hold}
+        promoNotice={promoNotice}
       />
     </div>
   );

@@ -10,6 +10,7 @@ const NAV: { href: string; label: string; needs: AdminPermission[] }[] = [
   { href: "/admin/categories", label: "Categories", needs: ["CATEGORIES"] },
   { href: "/admin/custom-requests", label: "Custom requests", needs: ["CUSTOM_REQUESTS"] },
   { href: "/admin/reviews", label: "Reviews", needs: ["REVIEWS"] },
+  { href: "/admin/promos", label: "Promo codes", needs: ["PROMOS"] },
   { href: "/admin/policies", label: "Policies", needs: ["POLICIES"] },
   { href: "/admin/settings", label: "Settings", needs: ["SETTINGS"] },
 ];

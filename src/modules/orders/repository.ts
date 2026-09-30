@@ -51,6 +51,8 @@ export function createOrderTransaction(data: {
   cartId: string;
   proof: { screenshotUrl: string; amountMinor: number; referenceNumber?: string };
   checkoutSessionId: string;
+  /** Set when the hold carried a promo - recorded as part of the same unit. */
+  promo?: { promoCodeId: string; userId: string; discountMinor: number };
 }) {
   return prisma.$transaction(async (tx) => {
     // Claim the price hold FIRST. Only one request can flip usedAt from null,
@@ -62,6 +64,25 @@ export function createOrderTransaction(data: {
     if (claimed.count === 0) throw new Error("SESSION_INVALID");
 
     const order = await tx.order.create({ data: data.order });
+
+    // The promo is honoured unconditionally here: it was checked when it was
+    // applied, and the customer has already transferred the discounted
+    // amount. The hold is claimed above, so this runs once per hold.
+    if (data.promo) {
+      await tx.promoRedemption.create({
+        data: {
+          promoCodeId: data.promo.promoCodeId,
+          orderId: order.id,
+          userId: data.promo.userId,
+          discountMinor: data.promo.discountMinor,
+        },
+      });
+      await tx.promoCode.update({
+        where: { id: data.promo.promoCodeId },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+
     await tx.paymentProof.create({
       data: {
         orderId: order.id,
@@ -138,7 +159,10 @@ export function createPaymentProof(data: {
 // ============================================================================
 
 export function findCheckoutSession(id: string) {
-  return prisma.checkoutSession.findUnique({ where: { id } });
+  return prisma.checkoutSession.findUnique({
+    where: { id },
+    include: { promoCode: true },
+  });
 }
 
 /** A still-valid hold for this exact bag - so a page refresh keeps the timer. */
@@ -150,6 +174,19 @@ export function findReusableCheckoutSession(userId: string, cartSignature: strin
       usedAt: null,
       expiresAt: { gt: new Date() },
     },
+    include: { promoCode: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/**
+ * The customer's most recent unused hold, valid or not - read just before a
+ * new hold replaces it, so a promo they applied can carry over.
+ */
+export function findLatestUnusedCheckoutSession(userId: string) {
+  return prisma.checkoutSession.findFirst({
+    where: { userId, usedAt: null },
+    include: { promoCode: true },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -163,13 +200,30 @@ export function replaceCheckoutSession(data: {
   rateMinor: number;
   cartSignature: string;
   expiresAt: Date;
+  promoCodeId?: string | null;
 }) {
   return prisma.$transaction(async (tx) => {
     await tx.checkoutSession.deleteMany({
       where: { userId: data.userId, usedAt: null },
     });
-    return tx.checkoutSession.create({ data });
+    return tx.checkoutSession.create({ data, include: { promoCode: true } });
   });
+}
+
+/**
+ * Apply or remove the hold's promo. Only while no receipt is attached and the
+ * hold is unused - the condition is in the WHERE, so a receipt uploaded a
+ * split second earlier wins. Returns false when nothing was changed.
+ */
+export async function setCheckoutSessionPromo(
+  id: string,
+  promoCodeId: string | null,
+): Promise<boolean> {
+  const updated = await prisma.checkoutSession.updateMany({
+    where: { id, receiptLockedAt: null, usedAt: null },
+    data: { promoCodeId },
+  });
+  return updated.count === 1;
 }
 
 export function lockCheckoutSessionRow(id: string, expiresAt: Date) {
