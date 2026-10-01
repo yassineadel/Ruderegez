@@ -1,10 +1,20 @@
 import Link from "next/link";
 import { getPricingSettings } from "@/lib/settings";
-import { formatEGP } from "@/lib/money";
+import { formatEGP, type Minor } from "@/lib/money";
 import SilverRatePanel from "./silver-rate-panel";
+import { listDeliveryZones } from "@/modules/delivery/service";
 
 export default async function AdminDashboard() {
-  const p = await getPricingSettings();
+  const [p, zones] = await Promise.all([getPricingSettings(), listDeliveryZones()]);
+  const fees = zones.map((z) => z.feeMinor);
+  const lo = Math.min(...fees) as Minor;
+  const hi = Math.max(...fees) as Minor;
+  const delivery =
+    fees.length === 0
+      ? "Collection only"
+      : lo === hi
+        ? formatEGP(lo)
+        : `${formatEGP(lo)} – ${formatEGP(hi)}`;
 
   return (
     <>
@@ -19,7 +29,10 @@ export default async function AdminDashboard() {
       <div className="grid gap-px bg-line border border-line sm:grid-cols-2 lg:grid-cols-3 max-w-4xl">
         <Stat label="Deposit - standard" value={`${p.depositPercent}%`} />
         <Stat label="Deposit - custom" value={`${p.depositPercentCustom}%`} />
-        <Stat label="Delivery fee" value={formatEGP(p.deliveryFee)} />
+        <Stat
+          label={`Delivery - ${zones.length} ${zones.length === 1 ? "area" : "areas"}`}
+          value={delivery}
+        />
         <Stat label="Weight tolerance" value={`${p.weightTolerancePercent}%`} />
         <Stat
           label="Engraving"

@@ -825,6 +825,27 @@ model Setting {
 
 
 // =============================================================================
+// DELIVERY AREAS
+// =============================================================================
+
+/// Where we deliver, and what each area costs. The admin adds areas and sets
+/// each fee; the customer picks one at checkout. The order keeps its own copy
+/// (Order.addressCity = the area's name, Order.deliveryFeeMinor = its fee), so
+/// renaming, re-pricing or deleting an area never changes a past order.
+model DeliveryZone {
+  id        String  @id @default(cuid())
+  name      String  @unique // "Cairo", "Giza", "Alexandria"
+  feeMinor  Int     // piastres. 8000 = 80 EGP
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+// =============================================================================
 // SILVER RATE  -  automatic sync from the international price
 // =============================================================================
 

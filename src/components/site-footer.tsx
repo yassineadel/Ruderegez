@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { getSetting } from "@/lib/settings";
+import { listDeliveryZones } from "@/modules/delivery/service";
+import { joinAreas } from "@/modules/delivery/format";
 
 /**
  * Server component. Reads the store contact details straight from settings, so
  * the client can change the phone number in the admin panel without a deploy.
  */
 export default async function SiteFooter() {
-  const [phone, address, mapLink, city] = await Promise.all([
+  const [phone, address, mapLink, zones] = await Promise.all([
     getSetting("storePhone"),
     getSetting("storeAddress"),
     getSetting("storeMapLink"),
-    getSetting("deliveryCityAllowed", "Cairo"),
+    listDeliveryZones(),
   ]);
+  const areas = joinAreas(zones.map((z) => z.name));
 
   // Only ever link out to an https address - the value is admin-typed text.
   const safeMapLink = mapLink.startsWith("https://") ? mapLink : null;
@@ -96,7 +99,7 @@ export default async function SiteFooter() {
                 )}
               </li>
             )}
-            <li>Delivery within {city}</li>
+            {areas && <li>Delivery to {areas}</li>}
           </ul>
         </div>
       </div>

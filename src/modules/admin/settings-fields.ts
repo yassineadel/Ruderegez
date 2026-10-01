@@ -52,14 +52,6 @@ export const SETTING_GROUPS: SettingGroup[] = [
         max: 100,
       },
       {
-        key: "deliveryFeeMinor",
-        label: "Delivery fee",
-        kind: "money",
-        help: "EGP, flat, within the delivery city.",
-        min: 0,
-        max: 10000,
-      },
-      {
         key: "weightTolerancePercent",
         label: "Weight tolerance",
         kind: "percent",
@@ -175,7 +167,7 @@ export const SETTING_GROUPS: SettingGroup[] = [
   },
   {
     title: "Store details",
-    description: "Contact information and delivery area.",
+    description: "Contact information. Delivery areas and their fees are on the Delivery areas page.",
     fields: [
       { key: "storeName", label: "Store name", kind: "text" },
       { key: "storePhone", label: "Phone", kind: "text", allowEmpty: true },
@@ -192,12 +184,6 @@ export const SETTING_GROUPS: SettingGroup[] = [
         label: "Google Maps embed URL",
         kind: "text",
         allowEmpty: true,
-      },
-      {
-        key: "deliveryCityAllowed",
-        label: "Delivery city",
-        kind: "text",
-        help: "Only this city can be selected at checkout.",
       },
     ],
   },

@@ -40,7 +40,7 @@ const prisma = new PrismaClient({ adapter });
 // CONFIRMED BY CLIENT (19 Aug):
 //   silver rate     113.68 EGP/g
 //   deposit         50%, same for standard and custom
-//   delivery        80 EGP within Cairo
+//   delivery        80 EGP within Cairo (now a DeliveryZone row, below)
 // -----------------------------------------------------------------------------
 
 const SETTINGS: Record<string, string> = {
@@ -48,7 +48,6 @@ const SETTINGS: Record<string, string> = {
   silverRatePerGramMinor: "11368", // 113.68 EGP
   depositPercent: "50",
   depositPercentCustom: "50", // client confirmed: same as standard
-  deliveryFeeMinor: "8000", // 80.00 EGP
 
   // --- PLACEHOLDERS - client still to confirm ----------------------------
   // BRD 6.2: the engraving fee rule has not been supplied. Flat fee assumed
@@ -89,7 +88,6 @@ const SETTINGS: Record<string, string> = {
   policyPrivacy: "",
 
   // --- OPERATIONAL -------------------------------------------------------
-  deliveryCityAllowed: "Cairo", // FR-50, Cairo only at launch
   storeName: "Ruderegez",
   currencyCode: "EGP",
 };
@@ -261,6 +259,15 @@ async function main() {
     });
   }
   console.log(`  settings        ${Object.keys(SETTINGS).length} keys`);
+
+  // --- DELIVERY AREAS --------------------------------------------------------
+  // Cairo at the client-confirmed 80 EGP. Never overwrites an admin's edits.
+  await prisma.deliveryZone.upsert({
+    where: { name: "Cairo" },
+    update: {},
+    create: { name: "Cairo", feeMinor: 8000, sortOrder: 0 },
+  });
+  console.log("  delivery areas  Cairo");
 
   // --- ADMIN USER ----------------------------------------------------------
   // Set ADMIN_EMAIL and ADMIN_PASSWORD in .env before running.

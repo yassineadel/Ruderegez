@@ -14,7 +14,7 @@ export async function placeOrderAction(input: {
   customerName: string;
   customerPhone: string;
   addressLine: string;
-  addressCity: string;
+  deliveryZoneId?: string;
   addressNotes?: string;
   paymentMethod: PaymentMethod;
   checkoutSessionId: string;

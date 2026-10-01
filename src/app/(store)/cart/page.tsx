@@ -3,12 +3,14 @@ import { getCartView } from "@/modules/cart/service";
 import { getPricingSettings } from "@/lib/settings";
 import { formatEGP } from "@/lib/money";
 import type { Minor } from "@/lib/money";
+import { listDeliveryZones } from "@/modules/delivery/service";
 import CartLines from "./cart-lines";
 
 export default async function CartPage() {
-  const [cart, settings] = await Promise.all([
+  const [cart, settings, zones] = await Promise.all([
     getCartView(),
     getPricingSettings(),
+    listDeliveryZones(),
   ]);
 
   if (cart.lines.length === 0) {
@@ -32,7 +34,12 @@ export default async function CartPage() {
     (cart.subtotalMinor * settings.depositPercent) / 100,
   ) as Minor;
 
-  const total = (cart.subtotalMinor + settings.deliveryFee) as Minor;
+  // The area is chosen at checkout, so the bag shows the cheapest one -
+  // "from" when the areas cost different amounts.
+  const fees = zones.map((z) => z.feeMinor);
+  const lowestFee = (fees.length ? Math.min(...fees) : 0) as Minor;
+  const feesVary = new Set(fees).size > 1;
+  const total = (cart.subtotalMinor + lowestFee) as Minor;
 
   return (
     <div className="px-6 lg:px-12 py-16 lg:py-24">
@@ -54,10 +61,14 @@ export default async function CartPage() {
             </div>
             <div className="flex justify-between">
               <dt className="text-ink-soft">Delivery</dt>
-              <dd>{formatEGP(settings.deliveryFee)}</dd>
+              <dd>
+                {fees.length === 0
+                  ? "Collection only"
+                  : `${feesVary ? "From " : ""}${formatEGP(lowestFee)}`}
+              </dd>
             </div>
             <div className="flex justify-between pt-3 border-t border-line text-base">
-              <dt>Total</dt>
+              <dt>{feesVary ? "Total from" : "Total"}</dt>
               <dd>{formatEGP(total)}</dd>
             </div>
           </dl>
@@ -79,7 +90,7 @@ export default async function CartPage() {
 
           <p className="mt-4 text-[11px] text-ink-soft leading-relaxed">
             Prices follow the live silver rate and are confirmed when your order
-            is placed.
+            is placed.{feesVary && " The delivery fee depends on the area you choose at checkout."}
           </p>
         </div>
       </div>

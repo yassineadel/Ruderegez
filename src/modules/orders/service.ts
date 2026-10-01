@@ -6,6 +6,7 @@ import { findCurrentCart } from "@/modules/cart/cart-identity";
 import { prisma } from "@/lib/db";
 import type { PaymentMethod } from "@/generated/prisma/client";
 import { promoDiscount } from "@/modules/promos/calc";
+import { getActiveZone } from "@/modules/delivery/service";
 import { generateOrderReference } from "./reference";
 import { assertUsableSession } from "./checkout-session";
 import { checkoutTotals } from "./totals";
@@ -20,7 +21,8 @@ export interface PlaceOrderInput {
   customerName: string;
   customerPhone: string;
   addressLine: string;
-  addressCity: string;
+  /** The delivery area picked at checkout. Ignored for a collection order. */
+  deliveryZoneId?: string;
   addressNotes?: string;
   paymentMethod: PaymentMethod;
   /** The price hold this order is placed from - it fixes the silver rate. */
@@ -81,6 +83,18 @@ export async function placeOrder(input: PlaceOrderInput) {
     throw new Error("INVALID_ADDRESS");
   }
 
+  // --- delivery area ---------------------------------------------------------
+  // The fee comes from the area the customer picked - read here, never sent
+  // by the browser. The order keeps the area's name and fee as they are now.
+  let deliveryFee = 0 as Minor;
+  let addressCity = "Store collection";
+  if (!isPickup) {
+    const zone = input.deliveryZoneId ? await getActiveZone(input.deliveryZoneId) : null;
+    if (!zone) throw new Error("INVALID_CITY");
+    deliveryFee = zone.feeMinor;
+    addressCity = zone.name;
+  }
+
   // Egyptian mobile: 01 followed by 0, 1, 2 or 5, then eight digits.
   const phone = input.customerPhone.replace(/[\s-]/g, "");
   if (!/^01[0125]\d{8}$/.test(phone)) throw new Error("INVALID_PHONE");
@@ -112,7 +126,7 @@ export async function placeOrder(input: PlaceOrderInput) {
       ? promoDiscount(cart.subtotalMinor, promo.percentOff)
       : (0 as Minor),
     // Nothing is delivered on a collection order, so nothing is charged for it.
-    deliveryFeeMinor: (isPickup ? 0 : settings.deliveryFee) as Minor,
+    deliveryFeeMinor: deliveryFee,
     payInFull: input.paymentMethod === "FULL_INSTAPAY",
     depositPercent,
   });
@@ -225,7 +239,7 @@ export async function placeOrder(input: PlaceOrderInput) {
       addressLine: isPickup
         ? `Collect from store${storeAddress ? ` - ${storeAddress}` : ""}`
         : input.addressLine.trim(),
-      addressCity: input.addressCity.trim(),
+      addressCity,
       addressNotes: isPickup ? null : input.addressNotes?.trim() || null,
 
       silverRateMinorSnapshot: settings.silverRatePerGram,

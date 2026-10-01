@@ -19,7 +19,8 @@ const MESSAGES: Record<string, string> = {
   [ORDER_ERRORS.EMPTY_CART]: "Your bag is empty.",
   [ORDER_ERRORS.INVALID_ADDRESS]: "Please enter a delivery address.",
   [ORDER_ERRORS.INVALID_PHONE]: "Please enter a valid Egyptian phone number.",
-  [ORDER_ERRORS.INVALID_CITY]: "We only deliver within the listed city at the moment.",
+  [ORDER_ERRORS.INVALID_CITY]:
+    "Please choose your delivery area again - the list has changed.",
   [ORDER_ERRORS.INVALID_PAYMENT_METHOD]: "Please choose how you'd like to pay.",
   [ORDER_ERRORS.PROOF_REQUIRED]:
     "Please upload the screenshot of your transfer before placing the order.",

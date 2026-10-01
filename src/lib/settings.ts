@@ -27,7 +27,6 @@ export interface PricingSettings {
   silverRatePerGram: Minor;
   depositPercent: number;
   depositPercentCustom: number;
-  deliveryFee: Minor;
   weightTolerancePercent: number;
   engravingFeeMode: "FLAT" | "PER_CHAR";
   engravingFee: Minor;
@@ -41,7 +40,6 @@ export async function getPricingSettings(): Promise<PricingSettings> {
     silverRatePerGram: int(s.silverRatePerGramMinor, 11368) as Minor,
     depositPercent: int(s.depositPercent, 50),
     depositPercentCustom: int(s.depositPercentCustom, 50),
-    deliveryFee: int(s.deliveryFeeMinor, 8000) as Minor,
     weightTolerancePercent: int(s.weightTolerancePercent, 20),
     engravingFeeMode: s.engravingFeeMode === "PER_CHAR" ? "PER_CHAR" : "FLAT",
     engravingFee: int(s.engravingFeeMinor, 15000) as Minor,

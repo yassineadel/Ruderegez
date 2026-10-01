@@ -16,6 +16,7 @@ import {
 } from "@/modules/orders/actions";
 import type { CheckoutSessionView } from "@/modules/orders/checkout-session";
 import { checkoutTotals } from "@/modules/orders/totals";
+import type { ZoneOption } from "@/modules/delivery/service";
 import ConfirmModal from "./confirm-modal";
 import TermsNotice from "./terms-notice";
 
@@ -30,7 +31,7 @@ type Method = "FULL_INSTAPAY" | "DEPOSIT_THEN_PICKUP";
 export default function CheckoutForm({
   lines,
   subtotalMinor,
-  deliveryFeeMinor,
+  zones,
   depositPercent,
   city,
   defaultName,
@@ -44,8 +45,10 @@ export default function CheckoutForm({
 }: {
   lines: CartLine[];
   subtotalMinor: Minor;
-  deliveryFeeMinor: Minor;
+  /** The delivery areas the customer can pick, each with its own fee. */
+  zones: ZoneOption[];
   depositPercent: number;
+  /** The areas as a phrase - "Cairo, Giza and Alexandria" - for the notices. */
   city: string;
   defaultName: string;
   leadTimeDays: number;
@@ -67,7 +70,14 @@ export default function CheckoutForm({
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
-  const [method, setMethod] = useState<Method>("FULL_INSTAPAY");
+  // No delivery areas switched on means collection is the only way to buy.
+  const canDeliver = zones.length > 0;
+  const [method, setMethod] = useState<Method>(
+    canDeliver ? "FULL_INSTAPAY" : "DEPOSIT_THEN_PICKUP",
+  );
+  const [zoneId, setZoneId] = useState(zones[0]?.id ?? "");
+  // The picked area, or the first one if the list changed under the customer.
+  const zone = zones.find((z) => z.id === zoneId) ?? zones[0] ?? null;
   const [modalOpen, setModalOpen] = useState(false);
 
   // The transfer receipt - uploaded before the order is placed.
@@ -136,7 +146,7 @@ export default function CheckoutForm({
   } = checkoutTotals({
     subtotalMinor,
     discountMinor: (session.promo?.discountMinor ?? 0) as Minor,
-    deliveryFeeMinor: (isPickup ? 0 : deliveryFeeMinor) as Minor,
+    deliveryFeeMinor: (isPickup ? 0 : (zone?.feeMinor ?? 0)) as Minor,
     payInFull: method === "FULL_INSTAPAY",
     depositPercent,
   });
@@ -152,7 +162,7 @@ export default function CheckoutForm({
         customerName: name,
         customerPhone: phone,
         addressLine: isPickup ? "" : address,
-        addressCity: city,
+        deliveryZoneId: isPickup ? undefined : zone?.id,
         addressNotes: isPickup ? undefined : notes || undefined,
         paymentMethod: method,
         checkoutSessionId: session.id,
@@ -212,7 +222,12 @@ export default function CheckoutForm({
             selected={method}
             onSelect={setMethod}
             title="Pay in full now - delivered to you"
-            detail={`One transfer by InstaPay or Vodafone Cash. Delivered within ${city}.`}
+            detail={
+              canDeliver
+                ? `One transfer by InstaPay or Vodafone Cash. We deliver to ${city}.`
+                : "Delivery isn't available at the moment - please collect from our store."
+            }
+            disabled={!canDeliver}
           />
           <MethodOption
             value="DEPOSIT_THEN_PICKUP"
@@ -273,9 +288,20 @@ export default function CheckoutForm({
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
-              <input className={field} value={city} disabled />
+              <select
+                className={field + " appearance-none cursor-pointer"}
+                value={zone?.id ?? ""}
+                onChange={(e) => setZoneId(e.target.value)}
+                aria-label="Delivery area"
+              >
+                {zones.map((z) => (
+                  <option key={z.id} value={z.id}>
+                    {z.name} - {formatEGP(z.feeMinor)} delivery
+                  </option>
+                ))}
+              </select>
               <p className="text-xs text-ink-soft">
-                We currently deliver within {city} only.
+                We deliver to {city}. The delivery fee depends on the area.
               </p>
               <textarea
                 className={field + " min-h-20 resize-y"}
@@ -390,7 +416,9 @@ export default function CheckoutForm({
             </div>
           )}
           <div className="flex justify-between">
-            <dt className="text-ink-soft">Delivery</dt>
+            <dt className="text-ink-soft">
+              Delivery{!isPickup && zone ? ` - ${zone.name}` : ""}
+            </dt>
             <dd>{isPickup ? "Collection - free" : formatEGP(deliveryMinor)}</dd>
           </div>
           <div className="flex justify-between pt-3 border-t border-line text-base">
@@ -573,19 +601,22 @@ function MethodOption({
   onSelect,
   title,
   detail,
+  disabled = false,
 }: {
   value: Method;
   selected: Method;
   onSelect: (v: Method) => void;
   title: string;
   detail: string;
+  disabled?: boolean;
 }) {
   const active = selected === value;
   return (
     <button
       onClick={() => onSelect(value)}
+      disabled={disabled}
       className={
-        "w-full text-left border p-5 transition-colors " +
+        "w-full text-left border p-5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed " +
         (active ? "border-ink bg-bone-deep" : "border-line hover:border-ink")
       }
     >

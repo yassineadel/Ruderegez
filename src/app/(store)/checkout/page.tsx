@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { openCheckoutSession } from "@/modules/orders/checkout-session";
 import { getPricingSettings, getSetting } from "@/lib/settings";
+import { listDeliveryZones } from "@/modules/delivery/service";
+import { joinAreas } from "@/modules/delivery/format";
 import CheckoutForm from "./checkout-form";
 
 export default async function CheckoutPage() {
@@ -11,7 +13,7 @@ export default async function CheckoutPage() {
   const [
     checkout,
     settings,
-    city,
+    zones,
     notice,
     leadTime,
     storeAddress,
@@ -23,7 +25,7 @@ export default async function CheckoutPage() {
     // Opens (or reuses) the price hold and prices the bag at the held rate.
     openCheckoutSession(),
     getPricingSettings(),
-    getSetting("deliveryCityAllowed", "Cairo"),
+    listDeliveryZones(),
     getSetting("checkoutNotice"),
     getSetting("defaultLeadTimeDays", "7"),
     getSetting("storeAddress"),
@@ -46,9 +48,9 @@ export default async function CheckoutPage() {
       <CheckoutForm
         lines={cart.lines}
         subtotalMinor={cart.subtotalMinor}
-        deliveryFeeMinor={settings.deliveryFee}
+        zones={zones}
         depositPercent={settings.depositPercent}
-        city={city}
+        city={joinAreas(zones.map((z) => z.name))}
         defaultName={session.user.name ?? ""}
         leadTimeDays={Number(leadTime)}
         notice={notice || undefined}
