@@ -165,7 +165,7 @@ export async function submitReview(input: {
 
 /** "Mona Hassan" -> "Mona H." - enough to feel real, not enough to identify
  *  someone. Falls back when the account has no name. */
-function toDisplayName(name: string | null): string {
+export function toDisplayName(name: string | null): string {
   const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "Verified customer";
   if (parts.length === 1) return parts[0];

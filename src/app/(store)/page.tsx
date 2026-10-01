@@ -2,13 +2,16 @@ import Link from "next/link";
 import { listFeatured, listProductTypes, listTrending } from "@/modules/catalog/service";
 import ProductCard from "@/components/product-card";
 import HeroCarousel from "@/components/hero-carousel";
+import HomeStrip from "@/components/home-strip";
+import { getHomeSlider } from "@/modules/homepage/service";
 
 
 export default async function HomePage() {
-   const [featured, types, trending] = await Promise.all([
+   const [featured, types, trending, slider] = await Promise.all([
     listFeatured(4),
     listProductTypes(),
     listTrending(6),
+    getHomeSlider(),
   ]);
 
   return (
@@ -63,6 +66,12 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* SLIDER - products, reviews and pictures picked in the admin panel. */}
+      {/* Renders nothing until at least one card is switched on.            */}
+      {/* ---------------------------------------------------------------- */}
+      <HomeStrip title={slider.title} slides={slider.slides} />
 
       {/* ---------------------------------------------------------------- */}
       {/* FEATURED - hand-picked in admin, so it is never empty by accident. */}

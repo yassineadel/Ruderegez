@@ -54,6 +54,7 @@ enum AdminPermission {
   SETTINGS         // every field on the settings page
   SILVER_RATE      // "Update now", approve or dismiss held rates
   PROMOS           // create, switch off and delete promo codes
+  HOMEPAGE         // the homepage slider
 }
 
 /// BRD 5.3 - audience is one of two independent category dimensions.
@@ -325,6 +326,7 @@ model Product {
   orderItems OrderItem[]
   reviews    Review[]
   customRequests CustomRequest[]
+  homeSlides HomeSlide[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -825,6 +827,49 @@ model Setting {
 
 
 // =============================================================================
+// HOMEPAGE SLIDER
+// =============================================================================
+
+enum HomeSlideKind {
+  PRODUCT // a catalog piece - image, name and live price come from the product
+  REVIEW  // a customer review - quote, stars and photo come from the review
+  IMAGE   // any picture the admin uploads, with optional text and link
+}
+
+/// One card in the homepage slider. PRODUCT and REVIEW cards read their
+/// content live, so a renamed product or edited review shows correctly; a
+/// card whose product is hidden or deleted, or whose review is hidden, is
+/// simply left out. Deleting the product or review deletes the card.
+model HomeSlide {
+  id   String        @id @default(cuid())
+  kind HomeSlideKind
+
+  productId String?
+  reviewId  String?
+
+  /// IMAGE: the picture (required). PRODUCT / REVIEW: unused.
+  imageUrl String?
+  /// IMAGE only. Both optional.
+  title    String?
+  subtitle String?
+  /// IMAGE only. A path on this site ("/products?type=rings") or an https link.
+  linkUrl  String?
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdByUserId String?
+
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  review  Review?  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+// =============================================================================
 // DELIVERY AREAS
 // =============================================================================
 
@@ -966,6 +1011,7 @@ model Review {
   orderItem OrderItem @relation(fields: [orderItemId], references: [id])
   hiddenBy  User?     @relation("ReviewHiddenBy", fields: [hiddenByUserId], references: [id])
   images    ReviewImage[]
+  homeSlides HomeSlide[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

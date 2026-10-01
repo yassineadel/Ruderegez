@@ -22,7 +22,7 @@ export default function ImageUpload({
     sizeBytes: number;
     mimeType: string;
   }) => void;
-  folder?: "products" | "payments" | "designs" | "reviews";
+  folder?: "products" | "payments" | "designs" | "reviews" | "homepage";
   label?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);

@@ -12,6 +12,7 @@ const GUARDS: Record<UploadFolder, () => Promise<unknown>> = {
   designs: requireUser,
   reviews: requireUser,
   products: () => requirePermission("PRODUCTS"),
+  homepage: () => requirePermission("HOMEPAGE"),
 };
 
 export async function POST(request: Request) {

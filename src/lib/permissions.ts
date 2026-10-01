@@ -19,6 +19,7 @@ export const PERMISSIONS: {
   { key: "SETTINGS", label: "Settings", description: "Every field on the settings page" },
   { key: "SILVER_RATE", label: "Silver rate", description: "Update now, approve held rates" },
   { key: "PROMOS", label: "Promo codes", description: "Create, switch off and delete promo codes" },
+  { key: "HOMEPAGE", label: "Homepage slider", description: "Choose what the homepage slider shows" },
 ];
 
 export const ALL_PERMISSIONS = PERMISSIONS.map((p) => p.key);
