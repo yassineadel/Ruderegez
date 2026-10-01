@@ -13,7 +13,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   session: {
     strategy: "jwt",           // forced by Credentials - Option A
-    maxAge: 15 * 60,           // 15 min. Blocking takes effect within this.
+    // Signed in for a day: the cookie lasts 24 hours from the last refresh,
+    // and is refreshed at most once an hour while the person is using the
+    // site. A long session doesn't weaken blocking - requireUser() reads the
+    // user from the database on every protected action, so a blocked or
+    // removed user loses access on their next click, not when this expires.
+    maxAge: 24 * 60 * 60,
+    updateAge: 60 * 60,
   },
 
   pages: {
