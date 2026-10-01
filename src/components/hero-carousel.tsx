@@ -36,7 +36,7 @@ export default function HeroCarousel({ slides }: { slides: Slide[] }) {
 
   return (
     <div
-      className="relative h-full bg-bone-deep overflow-hidden group"
+      className="relative h-full min-h-[50vh] lg:min-h-0 bg-bone-deep overflow-hidden group"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >

@@ -20,9 +20,7 @@ export default async function HomePage() {
       {/* HERO - text-led, so it holds up before real photography arrives.  */}
       {/* ---------------------------------------------------------------- */}
       <section className="relative">
-        {/* The image frame is 4:5 - the shape every product photo is shot in -
-            so the whole photo shows instead of being cropped to a wide box. */}
-        <div className="grid lg:grid-cols-[1fr_auto]">
+        <div className="grid lg:grid-cols-2 min-h-[70vh]">
           <div className="flex items-center px-6 lg:px-12 py-20 lg:py-0">
             <div className="max-w-md">
               <p className="text-[10px] tracking-[0.3em] text-ink-soft mb-6">
@@ -45,7 +43,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative bg-bone-deep aspect-[4/5] w-full lg:w-auto lg:h-[min(80vh,860px)]">
+                    <div className="relative bg-bone-deep min-h-[50vh] lg:min-h-0">
             {trending.length > 0 ? (
               <HeroCarousel
                 slides={trending
