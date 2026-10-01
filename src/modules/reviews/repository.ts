@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import type { Prisma, Review } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 // ============================================================================
 //  TYPES
@@ -14,8 +14,14 @@ export type PublicReview = Prisma.ReviewGetPayload<{
     body: true;
     createdAt: true;
     user: { select: { name: true } };
+    images: { select: { id: true; url: true } };
   };
 }>;
+
+const IMAGES = {
+  select: { id: true, url: true },
+  orderBy: { sortOrder: "asc" },
+} as const;
 
 /** Hidden reviews must never reach the storefront, so the condition lives
  *  here rather than in each caller. Same idea as VISIBLE in catalog. */
@@ -34,6 +40,7 @@ export function findVisibleReviews(productId: string): Promise<PublicReview[]> {
       body: true,
       createdAt: true,
       user: { select: { name: true } },
+      images: IMAGES,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -52,12 +59,10 @@ export async function summarizeReviews(
   return { average: result._avg.rating, count: result._count._all };
 }
 
-export function findUserReview(
-  userId: string,
-  productId: string,
-): Promise<Review | null> {
+export function findUserReview(userId: string, productId: string) {
   return prisma.review.findUnique({
     where: { userId_productId: { userId, productId } },
+    include: { images: IMAGES },
   });
 }
 
@@ -91,6 +96,10 @@ export function findDeliveredOrderItem(
  *
  * On edit, the moderation fields are deliberately NOT touched. A customer
  * whose review was hidden for abuse cannot un-hide it by editing.
+ *
+ * The photos are replaced as a set: whatever the form sends is the review's
+ * photos now. One transaction, so a review never shows half the old set and
+ * half the new.
  */
 export function upsertReview(data: {
   userId: string;
@@ -98,17 +107,29 @@ export function upsertReview(data: {
   orderItemId: string;
   rating: number;
   body: string;
-}): Promise<Review> {
-  return prisma.review.upsert({
-    where: {
-      userId_productId: { userId: data.userId, productId: data.productId },
-    },
-    create: data,
-    update: {
-      rating: data.rating,
-      body: data.body,
-      orderItemId: data.orderItemId,
-    },
+  images: string[];
+}) {
+  const { images, ...fields } = data;
+  return prisma.$transaction(async (tx) => {
+    const review = await tx.review.upsert({
+      where: {
+        userId_productId: { userId: fields.userId, productId: fields.productId },
+      },
+      create: fields,
+      update: {
+        rating: fields.rating,
+        body: fields.body,
+        orderItemId: fields.orderItemId,
+      },
+    });
+
+    await tx.reviewImage.deleteMany({ where: { reviewId: review.id } });
+    if (images.length > 0) {
+      await tx.reviewImage.createMany({
+        data: images.map((url, i) => ({ reviewId: review.id, url, sortOrder: i })),
+      });
+    }
+    return review;
   });
 }
 

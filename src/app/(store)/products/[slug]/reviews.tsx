@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { DisplayReview, MyReviewState } from "@/modules/reviews/service";
-import { REVIEW_BODY_MAX } from "@/modules/reviews/errors";
+import { REVIEW_BODY_MAX, REVIEW_MAX_IMAGES } from "@/modules/reviews/errors";
 import Stars from "./stars";
 import ReviewForm from "./review-form";
+import ReviewPhotos from "./review-photos";
 
 export default function Reviews({
   productId,
@@ -77,6 +78,12 @@ export default function Reviews({
                   <p className="text-sm leading-relaxed whitespace-pre-line mb-3">
                     {r.body}
                   </p>
+                  {r.images.length > 0 && (
+                    <ReviewPhotos
+                      urls={r.images.map((i) => i.url)}
+                      label={`Photo from ${r.authorName}`}
+                    />
+                  )}
                   <p className="text-xs text-ink-soft">
                     {r.authorName}, verified buyer
                   </p>
@@ -126,7 +133,11 @@ function MyReview({
       return (
         <div>
           <p className="text-sm mb-6">Your piece has arrived - how is it?</p>
-          <ReviewForm productId={productId} maxLength={REVIEW_BODY_MAX} />
+          <ReviewForm
+            productId={productId}
+            maxLength={REVIEW_BODY_MAX}
+            maxImages={REVIEW_MAX_IMAGES}
+          />
         </div>
       );
 
@@ -149,8 +160,10 @@ function MyReview({
               productId={productId}
               initialRating={state.review.rating}
               initialBody={state.review.body}
+              initialImages={state.review.images}
               isEdit
               maxLength={REVIEW_BODY_MAX}
+              maxImages={REVIEW_MAX_IMAGES}
             />
           </details>
         </div>

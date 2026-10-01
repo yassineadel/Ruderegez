@@ -10,7 +10,8 @@ import {
   findReviewTargets,
   type PublicReview,
 } from "./repository";
-import { REVIEW_BODY_MIN, REVIEW_BODY_MAX } from "./errors";
+import { isOwnUpload } from "@/lib/cloudinary";
+import { REVIEW_BODY_MIN, REVIEW_BODY_MAX, REVIEW_MAX_IMAGES } from "./errors";
 
 // ============================================================================
 //  TYPES
@@ -26,7 +27,7 @@ export type MyReviewState =
   | { status: "CAN_REVIEW" }
   | {
       status: "REVIEWED";
-      review: { rating: number; body: string; isHidden: boolean };
+      review: { rating: number; body: string; images: string[]; isHidden: boolean };
     };
 
 // ============================================================================
@@ -72,6 +73,7 @@ export async function getMyReviewState(
       review: {
         rating: existing.rating,
         body: existing.body,
+        images: existing.images.map((i) => i.url),
         isHidden: existing.hiddenAt !== null,
       },
     };
@@ -110,6 +112,8 @@ export async function submitReview(input: {
   productId: string;
   rating: number;
   body: string;
+  /** Cloudinary URLs from the review form, in display order. */
+  images?: string[];
 }): Promise<{ slug: string }> {
   // 1. Signed in and not blocked (BRD 9.3 - blocked users can't act).
   const user = await requireUser();
@@ -123,6 +127,15 @@ export async function submitReview(input: {
   if (body.length < REVIEW_BODY_MIN) throw new Error("BODY_TOO_SHORT");
   if (body.length > REVIEW_BODY_MAX) throw new Error("BODY_TOO_LONG");
 
+  // Photos: our own uploads only, into the reviews folder. The page renders
+  // these URLs, so anything else - another site, another Cloudinary account -
+  // is refused rather than shown.
+  const images = [...new Set(input.images ?? [])];
+  if (images.length > REVIEW_MAX_IMAGES) throw new Error("TOO_MANY_IMAGES");
+  if (!images.every((url) => isOwnUpload(url, "reviews"))) {
+    throw new Error("INVALID_IMAGE");
+  }
+
   // 3. FR-37 - bought AND received. Checked on every submit, including edits,
   //    so the rule holds even if someone calls the action directly.
   const orderItem = await findDeliveredOrderItem(user.id, input.productId);
@@ -135,6 +148,7 @@ export async function submitReview(input: {
     orderItemId: orderItem.id,
     rating: input.rating,
     body,
+    images,
   });
 
   // The action needs the slug to refresh the right product page.

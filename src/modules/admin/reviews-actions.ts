@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { hideReview, unhideReview } from "./reviews-service";
+import { hideReview, unhideReview, removeReviewPhoto } from "./reviews-service";
 import { type Result } from "./errors";
 
 const MESSAGES: Record<string, string> = {
@@ -9,6 +9,7 @@ const MESSAGES: Record<string, string> = {
   REASON_REQUIRED: "Please give a reason for hiding this review.",
   ALREADY_HIDDEN: "This review is already hidden.",
   NOT_HIDDEN: "This review is already visible.",
+  PHOTO_NOT_FOUND: "That photo has already been removed.",
   UNAUTHORIZED: "Please sign in again.",
   FORBIDDEN: "You do not have permission to do that.",
 };
@@ -43,6 +44,18 @@ export async function hideReviewAction(input: {
 export async function unhideReviewAction(id: string): Promise<Result> {
   try {
     const { slug } = await unhideReview(id);
+    revalidate(slug);
+    return { ok: true };
+  } catch (err) {
+    return fail(err);
+  }
+}
+export async function removeReviewPhotoAction(input: {
+  imageId: string;
+  reason: string;
+}): Promise<Result> {
+  try {
+    const { slug } = await removeReviewPhoto(input);
     revalidate(slug);
     return { ok: true };
   } catch (err) {

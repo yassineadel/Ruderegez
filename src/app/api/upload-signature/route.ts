@@ -1,23 +1,29 @@
 import { NextResponse } from "next/server";
-import { requireUser, requireAdmin } from "@/lib/auth-guards";
+import { requireUser, requirePermission } from "@/lib/auth-guards";
 import { createUploadSignature, type UploadFolder } from "@/lib/cloudinary";
 
-/** Customers upload payment proof. Everything else is admin-only. */
-const CUSTOMER_FOLDERS: UploadFolder[] = ["payments"];
-const ADMIN_FOLDERS: UploadFolder[] = ["products", "designs"];
+/**
+ * Who may upload into which folder. Customers upload payment receipts,
+ * custom-request photos and review photos; the admin folders need the section
+ * that uses them, so staff with that section can upload too.
+ */
+const GUARDS: Record<UploadFolder, () => Promise<unknown>> = {
+  payments: requireUser,
+  designs: requireUser,
+  reviews: requireUser,
+  products: () => requirePermission("PRODUCTS"),
+};
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const folder = body.folder as UploadFolder;
 
+  if (!Object.hasOwn(GUARDS, folder)) {
+    return NextResponse.json({ error: "Unknown folder" }, { status: 400 });
+  }
+
   try {
-    if (CUSTOMER_FOLDERS.includes(folder)) {
-      await requireUser();
-    } else if (ADMIN_FOLDERS.includes(folder)) {
-      await requireAdmin();
-    } else {
-      return NextResponse.json({ error: "Unknown folder" }, { status: 400 });
-    }
+    await GUARDS[folder]();
   } catch {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }

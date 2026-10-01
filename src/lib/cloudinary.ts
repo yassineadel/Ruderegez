@@ -20,7 +20,7 @@ const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME!;
 const API_KEY = process.env.CLOUDINARY_API_KEY!;
 const API_SECRET = process.env.CLOUDINARY_API_SECRET!;
 
-export type UploadFolder = "products" | "payments" | "designs";
+export type UploadFolder = "products" | "payments" | "designs" | "reviews";
 
 export interface UploadSignature {
   signature: string;
@@ -64,6 +64,17 @@ export function createUploadSignature(folder: UploadFolder): UploadSignature {
     cloudName: CLOUD_NAME,
     folder: fullFolder,
   };
+}
+
+/**
+ * True only for an image uploaded to OUR Cloudinary account, into the given
+ * folder. Anything a customer submits is checked with this before it is saved
+ * - the site then renders it, so an arbitrary URL must never get through.
+ */
+export function isOwnUpload(url: string, folder: UploadFolder): boolean {
+  if (!CLOUD_NAME) return false;
+  const prefix = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/`;
+  return url.startsWith(prefix) && url.includes(`/ruderegez/${folder}/`);
 }
 
 /**

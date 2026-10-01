@@ -2,7 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
+import ImageUpload from "@/components/image-upload";
 import { submitReviewAction } from "@/modules/reviews/actions";
+import { cloudinaryUrl } from "@/lib/cloudinary";
 
 const RATING_WORDS = ["", "Poor", "Fair", "Good", "Very good", "Excellent"];
 
@@ -10,20 +13,25 @@ export default function ReviewForm({
   productId,
   initialRating = 0,
   initialBody = "",
+  initialImages = [],
   isEdit = false,
   maxLength,
+  maxImages,
 }: {
   productId: string;
   initialRating?: number;
   initialBody?: string;
+  initialImages?: string[];
   isEdit?: boolean;
   maxLength: number;
+  maxImages: number;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [rating, setRating] = useState(initialRating);
   const [hover, setHover] = useState(0);
   const [body, setBody] = useState(initialBody);
+  const [images, setImages] = useState<string[]>(initialImages);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -39,7 +47,7 @@ export default function ReviewForm({
     }
 
     startTransition(async () => {
-      const result = await submitReviewAction({ productId, rating, body });
+      const result = await submitReviewAction({ productId, rating, body, images });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -97,6 +105,48 @@ export default function ReviewForm({
           {body.length} / {maxLength}
         </span>
       </label>
+
+      {/* ---------------- photos ---------------- */}
+      <div className="mt-4">
+        <p className="text-xs tracking-[0.15em] text-ink-soft mb-1">
+          PHOTOS (OPTIONAL)
+        </p>
+        <p className="text-xs text-ink-soft mb-3 leading-relaxed">
+          Show the piece as it arrived - up to {maxImages}. Photos appear with
+          your review.
+        </p>
+
+        {images.length > 0 && (
+          <div className="flex gap-3 mb-3">
+            {images.map((url) => (
+              <div key={url} className="relative w-20 aspect-square bg-bone-deep">
+                <img
+                  src={cloudinaryUrl(url, { width: 160, height: 160 })}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImages((list) => list.filter((u) => u !== url))}
+                  className="absolute -top-2 -right-2 bg-bone border border-line rounded-full p-1 text-ink-soft hover:text-ink"
+                  aria-label="Remove photo"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {images.length < maxImages && (
+          <ImageUpload
+            value=""
+            onChange={(url) => url && setImages((list) => [...list, url])}
+            folder="reviews"
+            label={images.length === 0 ? "Add a photo" : "Add another photo"}
+          />
+        )}
+      </div>
 
       <button
         onClick={handleSubmit}

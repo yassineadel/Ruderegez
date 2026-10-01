@@ -915,7 +915,9 @@ model AuditLog {
 /// the right to review. If anyone asks "did this person really buy it?", this
 /// row answers it.
 ///
-/// FR-38 - star rating and text only. No photos.
+/// Star rating, text, and up to 3 photos of the piece as it arrived
+/// (ReviewImage). Photos are hidden along with their review, and an admin can
+/// remove a single photo without hiding the whole review.
 ///
 /// One review per customer per product. Buying the same ring twice means
 /// editing the existing review, not posting a second one.
@@ -942,6 +944,7 @@ model Review {
   user      User      @relation(fields: [userId], references: [id])
   orderItem OrderItem @relation(fields: [orderItemId], references: [id])
   hiddenBy  User?     @relation("ReviewHiddenBy", fields: [hiddenByUserId], references: [id])
+  images    ReviewImage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -949,6 +952,22 @@ model Review {
   @@unique([userId, productId])
   @@index([productId, hiddenAt])
   @@index([createdAt])
+}
+
+/// A customer's photo of the piece they received. Max 3 per review, JPG / PNG
+/// / WEBP only, uploaded to our own Cloudinary folder - enforced in
+/// src/modules/reviews/service.ts.
+model ReviewImage {
+  id        String @id @default(cuid())
+  reviewId  String
+  url       String
+  sortOrder Int    @default(0)
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([reviewId])
 }
 
 // =============================================================================

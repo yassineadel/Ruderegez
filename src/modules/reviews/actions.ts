@@ -13,6 +13,7 @@ export async function submitReviewAction(input: {
   productId: string;
   rating: number;
   body: string;
+  images?: string[];
 }): Promise<Result> {
   try {
     const { slug } = await submitReview(input);

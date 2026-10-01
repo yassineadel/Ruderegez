@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listReviews } from "@/modules/admin/reviews-service";
 import ReviewControls from "./review-controls";
+import ReviewPhotoControls from "./review-photo-controls";
 import { requirePagePermission } from "@/lib/auth-guards";
 
 const FILTERS = [
@@ -14,7 +15,7 @@ export default async function AdminReviewsPage({
 }: {
   searchParams: Promise<{ filter?: string }>;
 }) {
-  await requirePagePermission(["ORDERS", "PAYMENTS"]);
+  await requirePagePermission("REVIEWS");
   const params = await searchParams;
   const filter =
     params.filter === "visible" || params.filter === "hidden"
@@ -106,6 +107,8 @@ export default async function AdminReviewsPage({
               <p className="text-sm leading-relaxed whitespace-pre-line text-ink-soft mb-4">
                 {r.body}
               </p>
+
+              {r.images.length > 0 && <ReviewPhotoControls images={r.images} />}
 
               {r.hiddenAt && (
                 <p className="text-xs text-red-800 mb-4">

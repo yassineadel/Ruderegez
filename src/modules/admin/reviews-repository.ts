@@ -6,6 +6,7 @@ export type AdminReview = Prisma.ReviewGetPayload<{
     user: { select: { name: true; email: true } };
     product: { select: { name: true; slug: true } };
     orderItem: { select: { order: { select: { reference: true } } } };
+    images: { select: { id: true; url: true } };
   };
 }>;
 
@@ -23,6 +24,7 @@ export function findReviews(filter?: "visible" | "hidden"): Promise<AdminReview[
       user: { select: { name: true, email: true } },
       product: { select: { name: true, slug: true } },
       orderItem: { select: { order: { select: { reference: true } } } },
+      images: { select: { id: true, url: true }, orderBy: { sortOrder: "asc" } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -88,6 +90,35 @@ export function unhideReview(data: {
         entityId: data.id,
         actorUserId: data.actorUserId,
         beforeJson: { hiddenReason: data.previousReason },
+      },
+    }),
+  ]);
+}
+export function findReviewImageById(id: string) {
+  return prisma.reviewImage.findUnique({
+    where: { id },
+    include: { review: { select: { id: true, product: { select: { slug: true } } } } },
+  });
+}
+
+/** Remove one photo + audit. The review itself stays up. */
+export function deleteReviewImage(data: {
+  id: string;
+  reviewId: string;
+  url: string;
+  reason: string;
+  actorUserId: string;
+}) {
+  return prisma.$transaction([
+    prisma.reviewImage.delete({ where: { id: data.id } }),
+    prisma.auditLog.create({
+      data: {
+        action: "REVIEW_PHOTO_REMOVED",
+        entityType: "Review",
+        entityId: data.reviewId,
+        actorUserId: data.actorUserId,
+        reason: data.reason,
+        beforeJson: { url: data.url },
       },
     }),
   ]);
