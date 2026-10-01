@@ -21,6 +21,7 @@ const MESSAGES: Record<string, string> = {
   FACTOR_REQUIRED: "Please enter the pricing factor.",
   LEAD_TIME_INVALID: "Lead time must be a whole number of days.",
   DUPLICATE_SIZE: "Two sizes have the same label.",
+  VIDEO_INVALID: "The video didn't upload properly. Please remove it and upload it again.",
   PRODUCT_NOT_FOUND: "That product no longer exists.",
   UNAUTHORIZED: "Please sign in again.",
   FORBIDDEN: "You do not have permission to do that.",

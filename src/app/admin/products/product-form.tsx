@@ -8,6 +8,7 @@ import type { Minor } from "@/lib/money";
 import type { PricingSettings } from "@/lib/settings";
 import type { ProductType } from "@/generated/prisma/client";
 import ImageUpload from "@/components/image-upload";
+import VideoUpload from "@/components/video-upload";
 import {
   createProductAction,
   updateProductAction,
@@ -33,6 +34,7 @@ interface FormState {
   isTrending: boolean;
   sizes: { label: string; weightG: number | null }[];
   images: { url: string; alt: string }[];
+  videoUrl: string;
 }
 
 const BLANK: FormState = {
@@ -52,6 +54,7 @@ const BLANK: FormState = {
   isTrending: false,
   sizes: [],
   images: [],
+  videoUrl: "",
 };
 
 export default function ProductForm({
@@ -434,6 +437,16 @@ export default function ProductForm({
               label="Upload a photo"
             />
           </div>
+        </section>
+
+        {/* ---------------- video ---------------- */}
+        <section>
+          <h2 className="font-display text-2xl font-light mb-1">Video</h2>
+          <p className="text-sm text-ink-soft mb-6">
+            Optional. A short clip of the piece - shown in the gallery after the
+            photos. Portrait (4:5 or 9:16) fills the frame best.
+          </p>
+          <VideoUpload value={f.videoUrl} onChange={(url) => set("videoUrl", url)} />
         </section>
       </div>
 

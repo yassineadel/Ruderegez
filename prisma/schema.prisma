@@ -301,6 +301,10 @@ model Product {
   isFlatPrice    Boolean @default(false)
   flatPriceMinor Int?
 
+  /// Optional short video of the piece (Cloudinary, ruderegez/products).
+  /// Shown in the product gallery after the photos. Null = no video.
+  videoUrl String?
+
   /// FR-33 - every piece is made to order (BRD 1.4). There is no stock,
   /// no availability state. Lead time replaces both.
   leadTimeDays Int @default(7)

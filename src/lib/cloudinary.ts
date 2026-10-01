@@ -67,13 +67,17 @@ export function createUploadSignature(folder: UploadFolder): UploadSignature {
 }
 
 /**
- * True only for an image uploaded to OUR Cloudinary account, into the given
- * folder. Anything a customer submits is checked with this before it is saved
- * - the site then renders it, so an arbitrary URL must never get through.
+ * True only for a file uploaded to OUR Cloudinary account, into the given
+ * folder. Anything submitted is checked with this before it is saved - the
+ * site then renders it, so an arbitrary URL must never get through.
  */
-export function isOwnUpload(url: string, folder: UploadFolder): boolean {
+export function isOwnUpload(
+  url: string,
+  folder: UploadFolder,
+  kind: "image" | "video" = "image",
+): boolean {
   if (!CLOUD_NAME) return false;
-  const prefix = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/`;
+  const prefix = `https://res.cloudinary.com/${CLOUD_NAME}/${kind}/upload/`;
   return url.startsWith(prefix) && url.includes(`/ruderegez/${folder}/`);
 }
 
@@ -99,4 +103,27 @@ export function cloudinaryUrl(
   if (opts.height) parts.push(`h_${opts.height}`, "c_fill");
 
   return url.replace("/upload/", `/upload/${parts.join(",")}/`);
+}
+/**
+ * A product video, re-encoded by Cloudinary for whatever the browser plays
+ * best (f_auto) at a sensible quality (q_auto), capped at 1080px wide - a
+ * phone video uploaded at 4K plays without the customer downloading 4K.
+ */
+export function cloudinaryVideoUrl(url: string): string {
+  if (!url.includes("/video/upload/")) return url;
+  return url.replace("/video/upload/", "/video/upload/f_auto,q_auto,w_1080,c_limit/");
+}
+
+/**
+ * A still frame of the video as a JPG - its first frame (so_0) - used as the
+ * poster before it plays and as the gallery thumbnail. Nothing extra is
+ * uploaded: Cloudinary makes it from the video on first request.
+ */
+export function cloudinaryVideoPoster(url: string, opts: { width?: number } = {}): string {
+  if (!url.includes("/video/upload/")) return url;
+  const parts = ["so_0", "f_jpg", "q_auto"];
+  if (opts.width) parts.push(`w_${opts.width}`);
+  return url
+    .replace("/video/upload/", `/video/upload/${parts.join(",")}/`)
+    .replace(/\.[a-z0-9]+$/i, ".jpg");
 }

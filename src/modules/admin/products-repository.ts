@@ -72,6 +72,7 @@ export interface ProductWriteData {
   isFeatured: boolean;
   isBestSeller: boolean;
   isTrending: boolean;
+  videoUrl: string | null;
 }
 
 export interface SizeInput {

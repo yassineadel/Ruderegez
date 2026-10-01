@@ -67,6 +67,7 @@ export default async function EditProductPage({
             weightG: s.weightMg === null ? null : s.weightMg / 1000,
           })),
           images: product.images.map((i) => ({ url: i.url, alt: i.alt ?? "" })),
+          videoUrl: product.videoUrl ?? "",
         }}
       />
     </>

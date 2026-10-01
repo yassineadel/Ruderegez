@@ -26,7 +26,11 @@ export default async function ProductPage({
   return (
     <div className="px-6 py-16 lg:px-12 lg:py-24">
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 max-w-6xl mx-auto">
-        <ProductGallery images={product.images} name={product.name} />
+        <ProductGallery
+          images={product.images}
+          videoUrl={product.videoUrl}
+          name={product.name}
+        />
 
         <div className="lg:pt-8">
           <p className="text-[10px] tracking-[0.25em] text-ink-soft mb-3">

@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/auth-guards";
 import { getPricingSettings } from "@/lib/settings";
 import { toMinor } from "@/lib/money";
+import { isOwnUpload } from "@/lib/cloudinary";
 import { findProductTypes } from "@/modules/catalog/repository";
 import {
   findAdminProducts,
@@ -45,6 +46,8 @@ export interface ProductFormInput {
   isTrending: boolean;
   sizes: { label: string; weightG: number | null }[];
   images: { url: string; alt: string }[];
+  /** Cloudinary video URL, or "" for no video. */
+  videoUrl: string;
 }
 
 export async function listAdminProducts(filters: {
@@ -102,6 +105,12 @@ async function validate(input: ProductFormInput): Promise<{
     throw new Error("LEAD_TIME_INVALID");
   }
 
+  // The storefront plays this URL, so only our own upload is accepted.
+  const videoUrl = input.videoUrl?.trim() || null;
+  if (videoUrl && !isOwnUpload(videoUrl, "products", "video")) {
+    throw new Error("VIDEO_INVALID");
+  }
+
   const labels = input.sizes.map((s) => s.label.trim()).filter(Boolean);
   if (new Set(labels).size !== labels.length) throw new Error("DUPLICATE_SIZE");
 
@@ -121,6 +130,7 @@ async function validate(input: ProductFormInput): Promise<{
       isFeatured: input.isFeatured,
       isBestSeller: input.isBestSeller,
       isTrending: input.isTrending,
+      videoUrl,
     },
     sizes: input.sizes
       .filter((s) => s.label.trim())
