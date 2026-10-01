@@ -99,7 +99,7 @@ export default async function SiteFooter() {
                 )}
               </li>
             )}
-            {areas && <li>Delivery to {areas}</li>}
+            {areas && <li>Delivery Within Egypt</li>}
           </ul>
         </div>
       </div>
