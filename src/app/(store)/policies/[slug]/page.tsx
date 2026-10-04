@@ -1,11 +1,6 @@
 import { notFound } from "next/navigation";
 import { getSetting } from "@/lib/settings";
-
-const POLICIES: Record<string, { key: string; title: string }> = {
-  terms: { key: "policyTerms", title: "Terms of sale" },
-  returns: { key: "policyReturns", title: "Returns policy" },
-  privacy: { key: "policyPrivacy", title: "Privacy policy" },
-};
+import { findPolicy, toParagraphs } from "@/lib/policies";
 
 export default async function PolicyPage({
   params,
@@ -13,29 +8,25 @@ export default async function PolicyPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const policy = POLICIES[slug];
+  const policy = findPolicy(slug);
   if (!policy) notFound();
 
-  const text = await getSetting(policy.key);
+  const paragraphs = toParagraphs(await getSetting(policy.key));
 
   return (
     <div className="px-6 lg:px-12 py-16 lg:py-24 max-w-2xl">
       <h1 className="font-display text-4xl font-light mb-10">{policy.title}</h1>
 
-      {text.trim() ? (
-        // A blank line in the textarea becomes a paragraph here.
+      {paragraphs.length > 0 ? (
         <div className="space-y-5">
-          {text
-            .split(/\n\s*\n/)
-            .filter((p) => p.trim())
-            .map((paragraph, i) => (
-              <p
-                key={i}
-                className="text-sm text-ink-soft leading-relaxed whitespace-pre-line"
-              >
-                {paragraph.trim()}
-              </p>
-            ))}
+          {paragraphs.map((paragraph, i) => (
+            <p
+              key={i}
+              className="text-sm text-ink-soft leading-relaxed whitespace-pre-line"
+            >
+              {paragraph}
+            </p>
+          ))}
         </div>
       ) : (
         <p className="text-sm text-ink-soft">

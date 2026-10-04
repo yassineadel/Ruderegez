@@ -6,6 +6,8 @@ import ProductGallery from "./gallery";
 import AddToBag from "./add-to-bag";
 import Stars from "./stars";
 import Reviews from "./reviews";
+import PolicySections from "./policy-sections";
+import { getPublishedPolicies } from "@/lib/policies";
 
 export default async function ProductPage({
   params,
@@ -17,10 +19,11 @@ export default async function ProductPage({
 
   if (!product) notFound();
 
-  // Both need the product id, and neither depends on the other.
-  const [{ reviews, average, count }, myState] = await Promise.all([
+  // None depends on another, so they load together.
+  const [{ reviews, average, count }, myState, policies] = await Promise.all([
     getProductReviews(product.id),
     getMyReviewState(product.id),
+    getPublishedPolicies(["returns", "terms"]),
   ]);
 
   return (
@@ -77,6 +80,9 @@ export default async function ProductPage({
               </p>
             )}
           </div>
+
+          {/* Returns and terms, folded - texts come from the Policies page. */}
+          <PolicySections policies={policies} />
         </div>
       </div>
 
